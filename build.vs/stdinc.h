@@ -10,7 +10,3 @@
 #ifndef _UNICODE
 #define _UNICODE
 #endif
-
-#define SHELL
-#define BSD				1 
-#define IFS_BROKEN

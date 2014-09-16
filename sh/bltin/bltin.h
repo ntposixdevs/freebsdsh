@@ -39,9 +39,10 @@
  * routines to ash routines using defines.
  */
 
+#include <unistd.h>
+
 #include "../shell.h"
 #include "../mystring.h"
-#ifdef SHELL
 #include "../output.h"
 #include "builtins.h"
 #define FILE struct output
@@ -62,15 +63,6 @@
 #define warnx warning
 #define warn(fmt, ...) warning(fmt ": %s", __VA_ARGS__, strerror(errno))
 #define errx(exitstatus, ...) error(__VA_ARGS__)
-
-#else
-#undef NULL
-#include <stdio.h>
-#undef main
-#define INITARGS(argv)	if ((commandname = argv[0]) == NULL) {fputs("Argc is zero\n", stderr); exit(2);} else
-#endif
-
-#include <unistd.h>
 
 pointer stalloc(int);
 void error(const char*, ...) __printf0like(1, 2);

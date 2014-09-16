@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/usr.bin/printf/printf.c 244407 2012-12-18 21:02:38Z eadler $	*/
+/*	static char const sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";	*/
 /*-
  * Copyright (c) 1989, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -31,24 +33,7 @@
  * and as a builtin for /bin/sh (#define SHELL).
  */
 
-#ifndef SHELL
-#ifndef lint
-static char const copyright[] =
-	"@(#) Copyright (c) 1989, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-#endif
-
-#ifndef lint
-#if 0
-static char const sccsid[] = "@(#)printf.c	8.1 (Berkeley) 7/20/93";
-#endif
-static const char rcsid[] =
-	"$FreeBSD: head/usr.bin/printf/printf.c 244407 2012-12-18 21:02:38Z eadler $";
-#endif /* not lint */
-
 #include <sys/types.h>
-
 #include <err.h>
 #include <errno.h>
 #include <inttypes.h>
@@ -60,12 +45,9 @@ static const char rcsid[] =
 #include <unistd.h>
 #include <wchar.h>
 
-#ifdef SHELL
-#define main printfcmd
 #include "bltin/bltin.h"
 #include "error.h"
 #include "options.h"
-#endif
 
 #define PF(f, func) do {						\
 	char *b = NULL;							\
@@ -99,39 +81,20 @@ static void	 usage(void);
 static char** gargv;
 
 int
-main(int argc, char* argv[])
+printfcmd(int argc, char* argv[])
 {
 	size_t len;
 	int chopped, end, rval;
 	char* format, *fmt, *start;
-#ifndef SHELL
-	int ch;
-	(void) setlocale(LC_ALL, "");
-#endif
-#ifdef SHELL
 	nextopt("");
 	argc -= argptr - argv;
 	argv = argptr;
-#else
-	while ((ch = getopt(argc, argv, "")) != -1)
-		switch (ch)
-		{
-			case '?':
-			default:
-				usage();
-				return (1);
-		}
-	argc -= optind;
-	argv += optind;
-#endif
 	if (argc < 1)
 	{
 		usage();
 		return (1);
 	}
-#ifdef SHELL
 	INTOFF;
-#endif
 	/*
 	 * Basic algorithm is to scan the format string for conversion
 	 * specifications -- once one is found, find out if the field
@@ -163,9 +126,7 @@ main(int argc, char* argv[])
 					fmt = printf_doformat(fmt, &rval);
 					if (fmt == NULL)
 					{
-#ifdef SHELL
 						INTON;
-#endif
 						return (1);
 					}
 					end = 0;
@@ -178,17 +139,13 @@ main(int argc, char* argv[])
 		if (end == 1)
 		{
 			warnx("missing format character");
-#ifdef SHELL
 			INTON;
-#endif
 			return (1);
 		}
 		fwrite(start, 1, fmt - start, stdout);
 		if (chopped || !*gargv)
 		{
-#ifdef SHELL
 			INTON;
-#endif
 			return (rval);
 		}
 		/* Restart at the beginning of the format string. */

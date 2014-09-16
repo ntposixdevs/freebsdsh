@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/mksyntax.c 246522 2013-02-07 22:42:33Z jilles $	*/
+/*	static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,28 +32,15 @@
  * SUCH DAMAGE.
  */
 
-#if 0
-#ifndef lint
-static char const copyright[] =
-	"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*	static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";	*/
-#endif /* not lint */
-#endif
-///*	$FreeBSD: head/bin/sh/mksyntax.c 246522 2013-02-07 22:42:33Z jilles $	*/
-
-/*
- * This program creates syntax.h and syntax.c.
- */
 #include <sys/types.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parser.h"
 
+/*
+ * This program creates syntax.h and syntax.c.
+ */
 
 struct synclass
 {

@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/kill/kill.c 263206 2014-03-15 14:58:48Z jilles $	*/
+/*	static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";	*/
 /*-
  * Copyright (c) 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -31,19 +33,6 @@
  * as a builtin for /bin/sh (#define SHELL).
  */
 
-#if 0
-#ifndef lint
-static char const copyright[] =
-	"@(#) Copyright (c) 1988, 1993, 1994\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*	static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
-#endif /* not lint */
-#endif
-/*	$FreeBSD: head/bin/kill/kill.c 263206 2014-03-15 14:58:48Z jilles $	*/
-
 #include <sys/types.h>
 #include <ctype.h>
 #include <err.h>
@@ -53,11 +42,8 @@ static char const copyright[] =
 #include <stdlib.h>
 #include <string.h>
 
-#ifdef SHELL
-#define main killcmd
 #include "bltin/bltin.h"
 #include "error.h"
-#endif
 
 static void nosig(const char*);
 static void printsignals(FILE*);
@@ -65,7 +51,7 @@ static int signame_to_signum(const char*);
 static void usage(void);
 
 int
-main(int argc, char* argv[])
+killcmd(int argc, char* argv[])
 {
 	int errors, numsig, pid, ret;
 	char* ep;
@@ -138,11 +124,9 @@ main(int argc, char* argv[])
 		usage();
 	for (errors = 0; argc; argc--, argv++)
 	{
-#ifdef SHELL
 		if (**argv == '%')
 			ret = killjob(*argv, numsig);
 		else
-#endif
 		{
 			pid = strtol(*argv, &ep, 10);
 			if (!** argv || *ep)
@@ -177,11 +161,7 @@ nosig(const char* name)
 {
 	warnx("unknown signal %s; valid signals:", name);
 	printsignals(stderr);
-#ifdef SHELL
 	error(NULL);
-#else
-	exit(2);
-#endif
 }
 
 static void
@@ -206,9 +186,5 @@ usage(void)
 				  "       kill -l [exit_status]",
 				  "       kill -signal_name pid ...",
 				  "       kill -signal_number pid ...");
-#ifdef SHELL
 	error(NULL);
-#else
-	exit(2);
-#endif
 }

@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/mknodes.c 196634 2009-08-28 22:41:25Z jilles $	*/
+/*	static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,19 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#if 0
-#ifndef lint
-static char const copyright[] =
-	"@(#) Copyright (c) 1991, 1993\n\
-	The Regents of the University of California.  All rights reserved.\n";
-#endif /* not lint */
-
-#ifndef lint
-/*	static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";	*/
-#endif /* not lint */
-#endif
-///*	$FreeBSD: head/bin/sh/mknodes.c 196634 2009-08-28 22:41:25Z jilles $	*/
 
 /*
  * This program reads the nodetypes file and nodes.c.pat file.  It generates
