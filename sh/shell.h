@@ -62,7 +62,7 @@ typedef intmax_t arith_t;
 #define	ARITH_MIN INTMAX_MIN
 #define	ARITH_MAX INTMAX_MAX
 
-typedef void *pointer;
+typedef void* pointer;
 
 #include <sys/cdefs.h>
 

@@ -53,47 +53,49 @@
 static int     funcblocksize;	/* size of structures in function */
 static int     funcstringsize;	/* size of strings in node */
 static pointer funcblock;	/* block to allocate function from */
-static char   *funcstring;	/* block to allocate strings from */
+static char*   funcstring;	/* block to allocate strings from */
 
-static const short nodesize[27] = {
-      ALIGN(sizeof (struct nbinary)),
-      ALIGN(sizeof (struct ncmd)),
-      ALIGN(sizeof (struct npipe)),
-      ALIGN(sizeof (struct nredir)),
-      ALIGN(sizeof (struct nredir)),
-      ALIGN(sizeof (struct nredir)),
-      ALIGN(sizeof (struct nbinary)),
-      ALIGN(sizeof (struct nbinary)),
-      ALIGN(sizeof (struct nif)),
-      ALIGN(sizeof (struct nbinary)),
-      ALIGN(sizeof (struct nbinary)),
-      ALIGN(sizeof (struct nfor)),
-      ALIGN(sizeof (struct ncase)),
-      ALIGN(sizeof (struct nclist)),
-      ALIGN(sizeof (struct nclist)),
-      ALIGN(sizeof (struct narg)),
-      ALIGN(sizeof (struct narg)),
-      ALIGN(sizeof (struct nfile)),
-      ALIGN(sizeof (struct nfile)),
-      ALIGN(sizeof (struct nfile)),
-      ALIGN(sizeof (struct nfile)),
-      ALIGN(sizeof (struct nfile)),
-      ALIGN(sizeof (struct ndup)),
-      ALIGN(sizeof (struct ndup)),
-      ALIGN(sizeof (struct nhere)),
-      ALIGN(sizeof (struct nhere)),
-      ALIGN(sizeof (struct nnot)),
+static const short nodesize[27] =
+{
+	ALIGN(sizeof(struct nbinary)),
+	ALIGN(sizeof(struct ncmd)),
+	ALIGN(sizeof(struct npipe)),
+	ALIGN(sizeof(struct nredir)),
+	ALIGN(sizeof(struct nredir)),
+	ALIGN(sizeof(struct nredir)),
+	ALIGN(sizeof(struct nbinary)),
+	ALIGN(sizeof(struct nbinary)),
+	ALIGN(sizeof(struct nif)),
+	ALIGN(sizeof(struct nbinary)),
+	ALIGN(sizeof(struct nbinary)),
+	ALIGN(sizeof(struct nfor)),
+	ALIGN(sizeof(struct ncase)),
+	ALIGN(sizeof(struct nclist)),
+	ALIGN(sizeof(struct nclist)),
+	ALIGN(sizeof(struct narg)),
+	ALIGN(sizeof(struct narg)),
+	ALIGN(sizeof(struct nfile)),
+	ALIGN(sizeof(struct nfile)),
+	ALIGN(sizeof(struct nfile)),
+	ALIGN(sizeof(struct nfile)),
+	ALIGN(sizeof(struct nfile)),
+	ALIGN(sizeof(struct ndup)),
+	ALIGN(sizeof(struct ndup)),
+	ALIGN(sizeof(struct nhere)),
+	ALIGN(sizeof(struct nhere)),
+	ALIGN(sizeof(struct nnot)),
 };
 
 
-static void calcsize(union node *);
-static void sizenodelist(struct nodelist *);
-static union node *copynode(union node *);
-static struct nodelist *copynodelist(struct nodelist *);
-static char *nodesavestr(const char *);
+static void calcsize(union node*);
+static void sizenodelist(struct nodelist*);
+static union node* copynode(union node*);
+static struct nodelist* copynodelist(struct nodelist*);
+static char* nodesavestr(const char*);
 
 
-struct funcdef {
+struct funcdef
+{
 	unsigned int refcount;
 	union node n;
 };
@@ -102,11 +104,10 @@ struct funcdef {
  * Make a copy of a parse tree.
  */
 
-struct funcdef *
-copyfunc(union node *n)
+struct funcdef*
+copyfunc(union node* n)
 {
-	struct funcdef *fn;
-
+	struct funcdef* fn;
 	if (n == NULL)
 		return NULL;
 	funcblocksize = offsetof(struct funcdef, n);
@@ -114,104 +115,106 @@ copyfunc(union node *n)
 	calcsize(n);
 	fn = ckmalloc(funcblocksize + funcstringsize);
 	fn->refcount = 1;
-	funcblock = (char *)fn + offsetof(struct funcdef, n);
-	funcstring = (char *)fn + funcblocksize;
+	funcblock = (char*)fn + offsetof(struct funcdef, n);
+	funcstring = (char*)fn + funcblocksize;
 	copynode(n);
 	return fn;
 }
 
 
-union node *
-getfuncnode(struct funcdef *fn)
+union node*
+		getfuncnode(struct funcdef* fn)
 {
 	return fn == NULL ? NULL : &fn->n;
 }
 
 
 static void
-calcsize(union node *n)
+calcsize(union node* n)
 {
-      if (n == NULL)
-	    return;
-      funcblocksize += nodesize[n->type];
-      switch (n->type) {
-      case NSEMI:
-      case NAND:
-      case NOR:
-      case NWHILE:
-      case NUNTIL:
-	    calcsize(n->nbinary.ch2);
-	    calcsize(n->nbinary.ch1);
-	    break;
-      case NCMD:
-	    calcsize(n->ncmd.redirect);
-	    calcsize(n->ncmd.args);
-	    break;
-      case NPIPE:
-	    sizenodelist(n->npipe.cmdlist);
-	    break;
-      case NREDIR:
-      case NBACKGND:
-      case NSUBSHELL:
-	    calcsize(n->nredir.redirect);
-	    calcsize(n->nredir.n);
-	    break;
-      case NIF:
-	    calcsize(n->nif.elsepart);
-	    calcsize(n->nif.ifpart);
-	    calcsize(n->nif.test);
-	    break;
-      case NFOR:
-	    funcstringsize += strlen(n->nfor.var) + 1;
-	    calcsize(n->nfor.body);
-	    calcsize(n->nfor.args);
-	    break;
-      case NCASE:
-	    calcsize(n->ncase.cases);
-	    calcsize(n->ncase.expr);
-	    break;
-      case NCLIST:
-      case NCLISTFALLTHRU:
-	    calcsize(n->nclist.body);
-	    calcsize(n->nclist.pattern);
-	    calcsize(n->nclist.next);
-	    break;
-      case NDEFUN:
-      case NARG:
-	    sizenodelist(n->narg.backquote);
-	    funcstringsize += strlen(n->narg.text) + 1;
-	    calcsize(n->narg.next);
-	    break;
-      case NTO:
-      case NFROM:
-      case NFROMTO:
-      case NAPPEND:
-      case NCLOBBER:
-	    calcsize(n->nfile.fname);
-	    calcsize(n->nfile.next);
-	    break;
-      case NTOFD:
-      case NFROMFD:
-	    calcsize(n->ndup.vname);
-	    calcsize(n->ndup.next);
-	    break;
-      case NHERE:
-      case NXHERE:
-	    calcsize(n->nhere.doc);
-	    calcsize(n->nhere.next);
-	    break;
-      case NNOT:
-	    calcsize(n->nnot.com);
-	    break;
-      };
+	if (n == NULL)
+		return;
+	funcblocksize += nodesize[n->type];
+	switch (n->type)
+	{
+		case NSEMI:
+		case NAND:
+		case NOR:
+		case NWHILE:
+		case NUNTIL:
+			calcsize(n->nbinary.ch2);
+			calcsize(n->nbinary.ch1);
+			break;
+		case NCMD:
+			calcsize(n->ncmd.redirect);
+			calcsize(n->ncmd.args);
+			break;
+		case NPIPE:
+			sizenodelist(n->npipe.cmdlist);
+			break;
+		case NREDIR:
+		case NBACKGND:
+		case NSUBSHELL:
+			calcsize(n->nredir.redirect);
+			calcsize(n->nredir.n);
+			break;
+		case NIF:
+			calcsize(n->nif.elsepart);
+			calcsize(n->nif.ifpart);
+			calcsize(n->nif.test);
+			break;
+		case NFOR:
+			funcstringsize += strlen(n->nfor.var) + 1;
+			calcsize(n->nfor.body);
+			calcsize(n->nfor.args);
+			break;
+		case NCASE:
+			calcsize(n->ncase.cases);
+			calcsize(n->ncase.expr);
+			break;
+		case NCLIST:
+		case NCLISTFALLTHRU:
+			calcsize(n->nclist.body);
+			calcsize(n->nclist.pattern);
+			calcsize(n->nclist.next);
+			break;
+		case NDEFUN:
+		case NARG:
+			sizenodelist(n->narg.backquote);
+			funcstringsize += strlen(n->narg.text) + 1;
+			calcsize(n->narg.next);
+			break;
+		case NTO:
+		case NFROM:
+		case NFROMTO:
+		case NAPPEND:
+		case NCLOBBER:
+			calcsize(n->nfile.fname);
+			calcsize(n->nfile.next);
+			break;
+		case NTOFD:
+		case NFROMFD:
+			calcsize(n->ndup.vname);
+			calcsize(n->ndup.next);
+			break;
+		case NHERE:
+		case NXHERE:
+			calcsize(n->nhere.doc);
+			calcsize(n->nhere.next);
+			break;
+		case NNOT:
+			calcsize(n->nnot.com);
+			break;
+	};
 }
 
 
 
 static void
-sizenodelist(struct nodelist *lp)
+sizenodelist(struct nodelist* lp)
 {
-	while (lp) {
+	while (lp)
+	{
 		funcblocksize += ALIGN(sizeof(struct nodelist));
 		calcsize(lp->n);
 		lp = lp->next;
@@ -220,105 +223,105 @@ sizenodelist(struct nodelist *lp)
 
 
 
-static union node *
-copynode(union node *n)
+static union node*
+		copynode(union node* n)
 {
-	union node *new;
-
-      if (n == NULL)
-	    return NULL;
-      new = funcblock;
-      funcblock = (char *)funcblock + nodesize[n->type];
-      switch (n->type) {
-      case NSEMI:
-      case NAND:
-      case NOR:
-      case NWHILE:
-      case NUNTIL:
-	    new->nbinary.ch2 = copynode(n->nbinary.ch2);
-	    new->nbinary.ch1 = copynode(n->nbinary.ch1);
-	    break;
-      case NCMD:
-	    new->ncmd.redirect = copynode(n->ncmd.redirect);
-	    new->ncmd.args = copynode(n->ncmd.args);
-	    break;
-      case NPIPE:
-	    new->npipe.cmdlist = copynodelist(n->npipe.cmdlist);
-	    new->npipe.backgnd = n->npipe.backgnd;
-	    break;
-      case NREDIR:
-      case NBACKGND:
-      case NSUBSHELL:
-	    new->nredir.redirect = copynode(n->nredir.redirect);
-	    new->nredir.n = copynode(n->nredir.n);
-	    break;
-      case NIF:
-	    new->nif.elsepart = copynode(n->nif.elsepart);
-	    new->nif.ifpart = copynode(n->nif.ifpart);
-	    new->nif.test = copynode(n->nif.test);
-	    break;
-      case NFOR:
-	    new->nfor.var = nodesavestr(n->nfor.var);
-	    new->nfor.body = copynode(n->nfor.body);
-	    new->nfor.args = copynode(n->nfor.args);
-	    break;
-      case NCASE:
-	    new->ncase.cases = copynode(n->ncase.cases);
-	    new->ncase.expr = copynode(n->ncase.expr);
-	    break;
-      case NCLIST:
-      case NCLISTFALLTHRU:
-	    new->nclist.body = copynode(n->nclist.body);
-	    new->nclist.pattern = copynode(n->nclist.pattern);
-	    new->nclist.next = copynode(n->nclist.next);
-	    break;
-      case NDEFUN:
-      case NARG:
-	    new->narg.backquote = copynodelist(n->narg.backquote);
-	    new->narg.text = nodesavestr(n->narg.text);
-	    new->narg.next = copynode(n->narg.next);
-	    break;
-      case NTO:
-      case NFROM:
-      case NFROMTO:
-      case NAPPEND:
-      case NCLOBBER:
-	    new->nfile.fname = copynode(n->nfile.fname);
-	    new->nfile.next = copynode(n->nfile.next);
-	    new->nfile.fd = n->nfile.fd;
-	    break;
-      case NTOFD:
-      case NFROMFD:
-	    new->ndup.vname = copynode(n->ndup.vname);
-	    new->ndup.dupfd = n->ndup.dupfd;
-	    new->ndup.next = copynode(n->ndup.next);
-	    new->ndup.fd = n->ndup.fd;
-	    break;
-      case NHERE:
-      case NXHERE:
-	    new->nhere.doc = copynode(n->nhere.doc);
-	    new->nhere.next = copynode(n->nhere.next);
-	    new->nhere.fd = n->nhere.fd;
-	    break;
-      case NNOT:
-	    new->nnot.com = copynode(n->nnot.com);
-	    break;
-      };
-      new->type = n->type;
+	union node* new;
+	if (n == NULL)
+		return NULL;
+	new = funcblock;
+	funcblock = (char*)funcblock + nodesize[n->type];
+	switch (n->type)
+	{
+		case NSEMI:
+		case NAND:
+		case NOR:
+		case NWHILE:
+		case NUNTIL:
+			new->nbinary.ch2 = copynode(n->nbinary.ch2);
+			new->nbinary.ch1 = copynode(n->nbinary.ch1);
+			break;
+		case NCMD:
+			new->ncmd.redirect = copynode(n->ncmd.redirect);
+			new->ncmd.args = copynode(n->ncmd.args);
+			break;
+		case NPIPE:
+			new->npipe.cmdlist = copynodelist(n->npipe.cmdlist);
+			new->npipe.backgnd = n->npipe.backgnd;
+			break;
+		case NREDIR:
+		case NBACKGND:
+		case NSUBSHELL:
+			new->nredir.redirect = copynode(n->nredir.redirect);
+			new->nredir.n = copynode(n->nredir.n);
+			break;
+		case NIF:
+			new->nif.elsepart = copynode(n->nif.elsepart);
+			new->nif.ifpart = copynode(n->nif.ifpart);
+			new->nif.test = copynode(n->nif.test);
+			break;
+		case NFOR:
+			new->nfor.var = nodesavestr(n->nfor.var);
+			new->nfor.body = copynode(n->nfor.body);
+			new->nfor.args = copynode(n->nfor.args);
+			break;
+		case NCASE:
+			new->ncase.cases = copynode(n->ncase.cases);
+			new->ncase.expr = copynode(n->ncase.expr);
+			break;
+		case NCLIST:
+		case NCLISTFALLTHRU:
+			new->nclist.body = copynode(n->nclist.body);
+			new->nclist.pattern = copynode(n->nclist.pattern);
+			new->nclist.next = copynode(n->nclist.next);
+			break;
+		case NDEFUN:
+		case NARG:
+			new->narg.backquote = copynodelist(n->narg.backquote);
+			new->narg.text = nodesavestr(n->narg.text);
+			new->narg.next = copynode(n->narg.next);
+			break;
+		case NTO:
+		case NFROM:
+		case NFROMTO:
+		case NAPPEND:
+		case NCLOBBER:
+			new->nfile.fname = copynode(n->nfile.fname);
+			new->nfile.next = copynode(n->nfile.next);
+			new->nfile.fd = n->nfile.fd;
+			break;
+		case NTOFD:
+		case NFROMFD:
+			new->ndup.vname = copynode(n->ndup.vname);
+			new->ndup.dupfd = n->ndup.dupfd;
+			new->ndup.next = copynode(n->ndup.next);
+			new->ndup.fd = n->ndup.fd;
+			break;
+		case NHERE:
+		case NXHERE:
+			new->nhere.doc = copynode(n->nhere.doc);
+			new->nhere.next = copynode(n->nhere.next);
+			new->nhere.fd = n->nhere.fd;
+			break;
+		case NNOT:
+			new->nnot.com = copynode(n->nnot.com);
+			break;
+	};
+	new->type = n->type;
 	return new;
 }
 
 
-static struct nodelist *
-copynodelist(struct nodelist *lp)
+static struct nodelist*
+copynodelist(struct nodelist* lp)
 {
-	struct nodelist *start;
-	struct nodelist **lpp;
-
+	struct nodelist* start;
+	struct nodelist** lpp;
 	lpp = &start;
-	while (lp) {
+	while (lp)
+	{
 		*lpp = funcblock;
-		funcblock = (char *)funcblock + ALIGN(sizeof(struct nodelist));
+		funcblock = (char*)funcblock + ALIGN(sizeof(struct nodelist));
 		(*lpp)->n = copynode(lp->n);
 		lp = lp->next;
 		lpp = &(*lpp)->next;
@@ -329,13 +332,12 @@ copynodelist(struct nodelist *lp)
 
 
 
-static char *
-nodesavestr(const char *s)
+static char*
+nodesavestr(const char* s)
 {
-	const char *p = s;
-	char *q = funcstring;
-	char   *rtn = funcstring;
-
+	const char* p = s;
+	char* q = funcstring;
+	char*   rtn = funcstring;
 	while ((*q++ = *p++) != '\0')
 		continue;
 	funcstring = q;
@@ -344,7 +346,7 @@ nodesavestr(const char *s)
 
 
 void
-reffunc(struct funcdef *fn)
+reffunc(struct funcdef* fn)
 {
 	if (fn)
 		fn->refcount++;
@@ -357,9 +359,10 @@ reffunc(struct funcdef *fn)
  */
 
 void
-unreffunc(struct funcdef *fn)
+unreffunc(struct funcdef* fn)
 {
-	if (fn) {
+	if (fn)
+	{
 		fn->refcount--;
 		if (fn->refcount > 0)
 			return;

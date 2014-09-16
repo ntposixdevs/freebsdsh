@@ -56,7 +56,6 @@ pointer
 ckmalloc(size_t nbytes)
 {
 	pointer p;
-
 	INTOFF;
 	p = malloc(nbytes);
 	INTON;
@@ -94,12 +93,11 @@ ckfree(pointer p)
  * Make a copy of a string in safe storage.
  */
 
-char *
-savestr(const char *s)
+char*
+savestr(const char* s)
 {
-	char *p;
+	char* p;
 	size_t len;
-
 	len = strlen(s);
 	p = ckmalloc(len + 1);
 	memcpy(p, s, len + 1);
@@ -119,29 +117,27 @@ savestr(const char *s)
 #define MINSIZE 496		/* minimum size of a block. */
 
 
-struct stack_block {
-	struct stack_block *prev;
+struct stack_block
+{
+	struct stack_block* prev;
 	/* Data follows */
 };
 #define SPACE(sp)	((char*)(sp) + ALIGN(sizeof(struct stack_block)))
 
-static struct stack_block *stackp;
-char *stacknxt;
+static struct stack_block* stackp;
+char* stacknxt;
 int stacknleft;
-char *sstrend;
+char* sstrend;
 
 
 static void
 stnewblock(int nbytes)
 {
-	struct stack_block *sp;
+	struct stack_block* sp;
 	int allocsize;
-
 	if (nbytes < MINSIZE)
 		nbytes = MINSIZE;
-
 	allocsize = ALIGN(sizeof(struct stack_block)) + ALIGN(nbytes);
-
 	INTOFF;
 	sp = ckmalloc(allocsize);
 	sp->prev = stackp;
@@ -156,8 +152,7 @@ stnewblock(int nbytes)
 pointer
 stalloc(int nbytes)
 {
-	char *p;
-
+	char* p;
 	nbytes = ALIGN(nbytes);
 	if (nbytes > stacknleft)
 		stnewblock(nbytes);
@@ -171,18 +166,19 @@ stalloc(int nbytes)
 void
 stunalloc(pointer p)
 {
-	if (p == NULL) {		/*DEBUG */
+	if (p == NULL)  		/*DEBUG */
+	{
 		write(STDERR_FILENO, "stunalloc\n", 10);
 		abort();
 	}
-	stacknleft += stacknxt - (char *)p;
+	stacknleft += stacknxt - (char*)p;
 	stacknxt = p;
 }
 
 
 
 void
-setstackmark(struct stackmark *mark)
+setstackmark(struct stackmark* mark)
 {
 	mark->stackp = stackp;
 	mark->stacknxt = stacknxt;
@@ -194,12 +190,12 @@ setstackmark(struct stackmark *mark)
 
 
 void
-popstackmark(struct stackmark *mark)
+popstackmark(struct stackmark* mark)
 {
-	struct stack_block *sp;
-
+	struct stack_block* sp;
 	INTOFF;
-	while (stackp != mark->stackp) {
+	while (stackp != mark->stackp)
+	{
 		sp = stackp;
 		stackp = sp->prev;
 		ckfree(sp);
@@ -224,17 +220,16 @@ popstackmark(struct stackmark *mark)
 static void
 growstackblock(int min)
 {
-	char *p;
+	char* p;
 	int newlen;
-	char *oldspace;
+	char* oldspace;
 	int oldlen;
-	struct stack_block *sp;
-	struct stack_block *oldstackp;
-
+	struct stack_block* sp;
+	struct stack_block* oldstackp;
 	if (min < stacknleft)
 		min = stacknleft;
 	if ((unsigned int)min >=
-	    INT_MAX / 2 - ALIGN(sizeof(struct stack_block)))
+			INT_MAX / 2 - ALIGN(sizeof(struct stack_block)))
 		error("Out of space");
 	min += stacknleft;
 	min += ALIGN(sizeof(struct stack_block));
@@ -243,8 +238,8 @@ growstackblock(int min)
 		newlen <<= 1;
 	oldspace = stacknxt;
 	oldlen = stacknleft;
-
-	if (stackp != NULL && stacknxt == SPACE(stackp)) {
+	if (stackp != NULL && stacknxt == SPACE(stackp))
+	{
 		INTOFF;
 		oldstackp = stackp;
 		stackp = oldstackp->prev;
@@ -255,7 +250,9 @@ growstackblock(int min)
 		stacknleft = newlen - (stacknxt - (char*)sp);
 		sstrend = stacknxt + stacknleft;
 		INTON;
-	} else {
+	}
+	else
+	{
 		newlen -= ALIGN(sizeof(struct stack_block));
 		p = stalloc(newlen);
 		if (oldlen != 0)
@@ -284,18 +281,17 @@ growstackblock(int min)
  * is space for at least one character.
  */
 
-static char *
+static char*
 growstrstackblock(int n, int min)
 {
 	growstackblock(min);
 	return stackblock() + n;
 }
 
-char *
+char*
 growstackstr(void)
 {
 	int len;
-
 	len = stackblocksize();
 	return (growstrstackblock(len, 0));
 }
@@ -305,26 +301,25 @@ growstackstr(void)
  * Called from CHECKSTRSPACE.
  */
 
-char *
-makestrspace(int min, char *p)
+char*
+makestrspace(int min, char* p)
 {
 	int len;
-
 	len = p - stackblock();
 	return (growstrstackblock(len, min));
 }
 
 
-char *
-stputbin(const char *data, size_t len, char *p)
+char*
+stputbin(const char* data, size_t len, char* p)
 {
 	CHECKSTRSPACE(len, p);
 	memcpy(p, data, len);
 	return (p + len);
 }
 
-char *
-stputs(const char *data, char *p)
+char*
+stputs(const char* data, char* p)
 {
 	return (stputbin(data, strlen(data), p));
 }

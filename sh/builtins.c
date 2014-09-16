@@ -6,7 +6,8 @@
 #include "shell.h"
 #include "builtins.h"
 
-int (*const builtinfunc[])(int, char **) = {
+int (*const builtinfunc[])(int, char**) =
+{
 	bltincmd,
 	aliascmd,
 	bgcmd,
@@ -50,7 +51,8 @@ int (*const builtinfunc[])(int, char **) = {
 	wordexpcmd,
 };
 
-const struct builtincmd builtincmd[] = {
+const struct builtincmd builtincmd[] =
+{
 	{ "builtin", 0, 0 },
 	{ "alias", 1, 0 },
 	{ "bg", 2, 0 },

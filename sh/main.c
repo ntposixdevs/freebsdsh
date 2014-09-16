@@ -32,7 +32,7 @@
 
 #ifndef lint
 static char const copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
+	"@(#) Copyright (c) 1991, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
@@ -81,8 +81,8 @@ int localeisutf8, initial_localeisutf8;
 
 static void reset(void);
 static void cmdloop(int);
-static void read_profile(const char *);
-static char *find_dot_file(char *);
+static void read_profile(const char*);
+static char* find_dot_file(char*);
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute
@@ -93,31 +93,29 @@ static char *find_dot_file(char *);
  */
 
 int
-main(int argc, char *argv[])
+main(int argc, char* argv[])
 {
 	struct stackmark smark, smark2;
 	volatile int state;
-	char *shinit;
-
+	char* shinit;
 	(void) setlocale(LC_ALL, "");
 	initcharset();
 	state = 0;
-	if (setjmp(main_handler.loc)) {
-		switch (exception) {
-		case EXEXEC:
-			exitstatus = exerrno;
-			break;
-
-		case EXERROR:
-			exitstatus = 2;
-			break;
-
-		default:
-			break;
+	if (setjmp(main_handler.loc))
+	{
+		switch (exception)
+		{
+			case EXEXEC:
+				exitstatus = exerrno;
+				break;
+			case EXERROR:
+				exitstatus = 2;
+				break;
+			default:
+				break;
 		}
-
 		if (state == 0 || iflag == 0 || ! rootshell ||
-		    exception == EXEXIT)
+				exception == EXEXIT)
 			exitshell(exitstatus);
 		reset();
 		if (exception == EXINT)
@@ -136,7 +134,8 @@ main(int argc, char *argv[])
 	handler = &main_handler;
 #ifdef DEBUG
 	opentrace();
-	trputs("Shell args:  ");  trargs(argv);
+	trputs("Shell args:  ");
+	trargs(argv);
 #endif
 	rootpid = getpid();
 	rootshell = 1;
@@ -149,7 +148,8 @@ main(int argc, char *argv[])
 	INTON;
 	if (iflag)
 		chkmail(1);
-	if (argv[0] && argv[0][0] == '-') {
+	if (argv[0] && argv[0][0] == '-')
+	{
 		state = 1;
 		read_profile("/etc/profile");
 state1:
@@ -161,8 +161,10 @@ state1:
 	}
 state2:
 	state = 3;
-	if (!privileged && iflag) {
-		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0') {
+	if (!privileged && iflag)
+	{
+		if ((shinit = lookupvar("ENV")) != NULL && *shinit != '\0')
+		{
 			state = 3;
 			read_profile(shinit);
 		}
@@ -170,11 +172,13 @@ state2:
 state3:
 	state = 4;
 	popstackmark(&smark2);
-	if (minusc) {
+	if (minusc)
+	{
 		evalstring(minusc, sflag ? 0 : EV_EXIT);
 	}
 state4:
-	if (sflag || minusc == NULL) {
+	if (sflag || minusc == NULL)
+	{
 		cmdloop(1);
 	}
 	exitshell(exitstatus);
@@ -197,18 +201,19 @@ reset(void)
 static void
 cmdloop(int top)
 {
-	union node *n;
+	union node* n;
 	struct stackmark smark;
 	int inter;
 	int numeof = 0;
-
 	TRACE(("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
-	for (;;) {
+	for (;;)
+	{
 		if (pendingsig)
 			dotrap();
 		inter = 0;
-		if (iflag && top) {
+		if (iflag && top)
+		{
 			inter++;
 			showjobs(1, SHOWJOBS_DEFAULT);
 			chkmail(0);
@@ -216,23 +221,28 @@ cmdloop(int top)
 		}
 		n = parsecmd(inter);
 		/* showtree(n); DEBUG */
-		if (n == NEOF) {
+		if (n == NEOF)
+		{
 			if (!top || numeof >= 50)
 				break;
-			if (!stoppedjobs()) {
+			if (!stoppedjobs())
+			{
 				if (!Iflag)
 					break;
 				out2fmt_flush("\nUse \"exit\" to leave shell.\n");
 			}
 			numeof++;
-		} else if (n != NULL && nflag == 0) {
+		}
+		else if (n != NULL && nflag == 0)
+		{
 			job_warning = (job_warning == 2) ? 1 : 0;
 			numeof = 0;
 			evaltree(n, 0);
 		}
 		popstackmark(&smark);
 		setstackmark(&smark);
-		if (evalskip != 0) {
+		if (evalskip != 0)
+		{
 			if (evalskip == SKIPRETURN)
 				evalskip = 0;
 			break;
@@ -248,11 +258,10 @@ cmdloop(int top)
  */
 
 static void
-read_profile(const char *name)
+read_profile(const char* name)
 {
 	int fd;
-	const char *expandedname;
-
+	const char* expandedname;
 	expandedname = expandstr(name);
 	if (expandedname == NULL)
 		return;
@@ -273,7 +282,7 @@ read_profile(const char *name)
  */
 
 void
-readcmdfile(const char *name)
+readcmdfile(const char* name)
 {
 	setinputfile(name, 1);
 	cmdloop(0);
@@ -288,19 +297,19 @@ readcmdfile(const char *name)
  */
 
 
-static char *
-find_dot_file(char *basename)
+static char*
+find_dot_file(char* basename)
 {
-	char *fullname;
-	const char *path = pathval();
+	char* fullname;
+	const char* path = pathval();
 	struct stat statb;
-
 	/* don't try this for absolute or relative paths */
-	if( strchr(basename, '/'))
+	if (strchr(basename, '/'))
 		return basename;
-
-	while ((fullname = padvance(&path, basename)) != NULL) {
-		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode)) {
+	while ((fullname = padvance(&path, basename)) != NULL)
+	{
+		if ((stat(fullname, &statb) == 0) && S_ISREG(statb.st_mode))
+		{
 			/*
 			 * Don't bother freeing here, since it will
 			 * be freed by the caller.
@@ -313,21 +322,17 @@ find_dot_file(char *basename)
 }
 
 int
-dotcmd(int argc, char **argv)
+dotcmd(int argc, char** argv)
 {
-	char *filename, *fullname;
-
+	char* filename, *fullname;
 	if (argc < 2)
 		error("missing filename");
-
 	exitstatus = 0;
-
 	/*
 	 * Because we have historically not supported any options,
 	 * only treat "--" specially.
 	 */
 	filename = argc > 2 && strcmp(argv[1], "--") == 0 ? argv[2] : argv[1];
-
 	fullname = find_dot_file(filename);
 	setinputfile(fullname, 1);
 	commandname = fullname;
@@ -338,7 +343,7 @@ dotcmd(int argc, char **argv)
 
 
 int
-exitcmd(int argc, char **argv)
+exitcmd(int argc, char** argv)
 {
 	if (stoppedjobs())
 		return 0;

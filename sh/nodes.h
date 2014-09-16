@@ -32,132 +32,147 @@
 
 
 
-struct nbinary {
-      int type;
-      union node *ch1;
-      union node *ch2;
+struct nbinary
+{
+	int type;
+	union node* ch1;
+	union node* ch2;
 };
 
 
-struct ncmd {
-      int type;
-      union node *args;
-      union node *redirect;
+struct ncmd
+{
+	int type;
+	union node* args;
+	union node* redirect;
 };
 
 
-struct npipe {
-      int type;
-      int backgnd;
-      struct nodelist *cmdlist;
+struct npipe
+{
+	int type;
+	int backgnd;
+	struct nodelist* cmdlist;
 };
 
 
-struct nredir {
-      int type;
-      union node *n;
-      union node *redirect;
+struct nredir
+{
+	int type;
+	union node* n;
+	union node* redirect;
 };
 
 
-struct nif {
-      int type;
-      union node *test;
-      union node *ifpart;
-      union node *elsepart;
+struct nif
+{
+	int type;
+	union node* test;
+	union node* ifpart;
+	union node* elsepart;
 };
 
 
-struct nfor {
-      int type;
-      union node *args;
-      union node *body;
-      char *var;
+struct nfor
+{
+	int type;
+	union node* args;
+	union node* body;
+	char* var;
 };
 
 
-struct ncase {
-      int type;
-      union node *expr;
-      union node *cases;
+struct ncase
+{
+	int type;
+	union node* expr;
+	union node* cases;
 };
 
 
-struct nclist {
-      int type;
-      union node *next;
-      union node *pattern;
-      union node *body;
+struct nclist
+{
+	int type;
+	union node* next;
+	union node* pattern;
+	union node* body;
 };
 
 
-struct narg {
-      int type;
-      union node *next;
-      char *text;
-      struct nodelist *backquote;
+struct narg
+{
+	int type;
+	union node* next;
+	char* text;
+	struct nodelist* backquote;
 };
 
 
-struct nfile {
-      int type;
-      int fd;
-      union node *next;
-      union node *fname;
-      char *expfname;
+struct nfile
+{
+	int type;
+	int fd;
+	union node* next;
+	union node* fname;
+	char* expfname;
 };
 
 
-struct ndup {
-      int type;
-      int fd;
-      union node *next;
-      int dupfd;
-      union node *vname;
+struct ndup
+{
+	int type;
+	int fd;
+	union node* next;
+	int dupfd;
+	union node* vname;
 };
 
 
-struct nhere {
-      int type;
-      int fd;
-      union node *next;
-      union node *doc;
-      char *expdoc;
+struct nhere
+{
+	int type;
+	int fd;
+	union node* next;
+	union node* doc;
+	char* expdoc;
 };
 
 
-struct nnot {
-      int type;
-      union node *com;
+struct nnot
+{
+	int type;
+	union node* com;
 };
 
 
-union node {
-      int type;
-      struct nbinary nbinary;
-      struct ncmd ncmd;
-      struct npipe npipe;
-      struct nredir nredir;
-      struct nif nif;
-      struct nfor nfor;
-      struct ncase ncase;
-      struct nclist nclist;
-      struct narg narg;
-      struct nfile nfile;
-      struct ndup ndup;
-      struct nhere nhere;
-      struct nnot nnot;
+union node
+{
+	int type;
+	struct nbinary nbinary;
+	struct ncmd ncmd;
+	struct npipe npipe;
+	struct nredir nredir;
+	struct nif nif;
+	struct nfor nfor;
+	struct ncase ncase;
+	struct nclist nclist;
+	struct narg narg;
+	struct nfile nfile;
+	struct ndup ndup;
+	struct nhere nhere;
+	struct nnot nnot;
 };
 
 
-struct nodelist {
-	struct nodelist *next;
-	union node *n;
+struct nodelist
+{
+	struct nodelist* next;
+	union node* n;
 };
 
 
 struct funcdef;
-struct funcdef *copyfunc(union node *);
-union node *getfuncnode(struct funcdef *);
-void reffunc(struct funcdef *);
-void unreffunc(struct funcdef *);
+struct funcdef* copyfunc(union node*);
+union node* getfuncnode(struct funcdef*);
+void reffunc(struct funcdef*);
+void unreffunc(struct funcdef*);

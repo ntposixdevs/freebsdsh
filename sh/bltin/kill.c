@@ -34,7 +34,7 @@
 #if 0
 #ifndef lint
 static char const copyright[] =
-"@(#) Copyright (c) 1988, 1993, 1994\n\
+	"@(#) Copyright (c) 1988, 1993, 1994\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
@@ -59,32 +59,31 @@ __FBSDID("$FreeBSD: head/bin/kill/kill.c 263206 2014-03-15 14:58:48Z jilles $");
 #include "error.h"
 #endif
 
-static void nosig(const char *);
-static void printsignals(FILE *);
-static int signame_to_signum(const char *);
+static void nosig(const char*);
+static void printsignals(FILE*);
+static int signame_to_signum(const char*);
 static void usage(void);
 
 int
-main(int argc, char *argv[])
+main(int argc, char* argv[])
 {
 	int errors, numsig, pid, ret;
-	char *ep;
-
+	char* ep;
 	if (argc < 2)
 		usage();
-
 	numsig = SIGTERM;
-
 	argc--, argv++;
-	if (!strcmp(*argv, "-l")) {
+	if (!strcmp(*argv, "-l"))
+	{
 		argc--, argv++;
 		if (argc > 1)
 			usage();
-		if (argc == 1) {
+		if (argc == 1)
+		{
 			if (!isdigit(**argv))
 				usage();
 			numsig = strtol(*argv, &ep, 10);
-			if (!**argv || *ep)
+			if (!** argv || *ep)
 				errx(2, "illegal signal number: %s", *argv);
 			if (numsig >= 128)
 				numsig -= 128;
@@ -96,42 +95,49 @@ main(int argc, char *argv[])
 		printsignals(stdout);
 		return (0);
 	}
-
-	if (!strcmp(*argv, "-s")) {
+	if (!strcmp(*argv, "-s"))
+	{
 		argc--, argv++;
-		if (argc < 1) {
+		if (argc < 1)
+		{
 			warnx("option requires an argument -- s");
 			usage();
 		}
-		if (strcmp(*argv, "0")) {
+		if (strcmp(*argv, "0"))
+		{
 			if ((numsig = signame_to_signum(*argv)) < 0)
 				nosig(*argv);
-		} else
+		}
+		else
 			numsig = 0;
 		argc--, argv++;
-	} else if (**argv == '-' && *(*argv + 1) != '-') {
+	}
+	else if (**argv == '-' && *(*argv + 1) != '-')
+	{
 		++*argv;
-		if (isalpha(**argv)) {
+		if (isalpha(**argv))
+		{
 			if ((numsig = signame_to_signum(*argv)) < 0)
 				nosig(*argv);
-		} else if (isdigit(**argv)) {
+		}
+		else if (isdigit(**argv))
+		{
 			numsig = strtol(*argv, &ep, 10);
-			if (!**argv || *ep)
+			if (!** argv || *ep)
 				errx(2, "illegal signal number: %s", *argv);
 			if (numsig < 0)
 				nosig(*argv);
-		} else
+		}
+		else
 			nosig(*argv);
 		argc--, argv++;
 	}
-
 	if (argc > 0 && strncmp(*argv, "--", 2) == 0)
 		argc--, argv++;
-
 	if (argc == 0)
 		usage();
-
-	for (errors = 0; argc; argc--, argv++) {
+	for (errors = 0; argc; argc--, argv++)
+	{
 #ifdef SHELL
 		if (**argv == '%')
 			ret = killjob(*argv, numsig);
@@ -139,27 +145,27 @@ main(int argc, char *argv[])
 #endif
 		{
 			pid = strtol(*argv, &ep, 10);
-			if (!**argv || *ep)
+			if (!** argv || *ep)
 				errx(2, "illegal process id: %s", *argv);
 			ret = kill(pid, numsig);
 		}
-		if (ret == -1) {
+		if (ret == -1)
+		{
 			warn("%s", *argv);
 			errors = 1;
 		}
 	}
-
 	return (errors);
 }
 
 static int
-signame_to_signum(const char *sig)
+signame_to_signum(const char* sig)
 {
 	int n;
-
 	if (strncasecmp(sig, "SIG", 3) == 0)
 		sig += 3;
-	for (n = 1; n < sys_nsig; n++) {
+	for (n = 1; n < sys_nsig; n++)
+	{
 		if (!strcasecmp(sys_signame[n], sig))
 			return (n);
 	}
@@ -167,9 +173,8 @@ signame_to_signum(const char *sig)
 }
 
 static void
-nosig(const char *name)
+nosig(const char* name)
 {
-
 	warnx("unknown signal %s; valid signals:", name);
 	printsignals(stderr);
 #ifdef SHELL
@@ -180,11 +185,11 @@ nosig(const char *name)
 }
 
 static void
-printsignals(FILE *fp)
+printsignals(FILE* fp)
 {
 	int n;
-
-	for (n = 1; n < sys_nsig; n++) {
+	for (n = 1; n < sys_nsig; n++)
+	{
 		(void)fprintf(fp, "%s", sys_signame[n]);
 		if (n == (sys_nsig / 2) || n == (sys_nsig - 1))
 			(void)fprintf(fp, "\n");
@@ -196,12 +201,11 @@ printsignals(FILE *fp)
 static void
 usage(void)
 {
-
 	(void)fprintf(stderr, "%s\n%s\n%s\n%s\n",
-		"usage: kill [-s signal_name] pid ...",
-		"       kill -l [exit_status]",
-		"       kill -signal_name pid ...",
-		"       kill -signal_number pid ...");
+				  "usage: kill [-s signal_name] pid ...",
+				  "       kill -l [exit_status]",
+				  "       kill -signal_name pid ...",
+				  "       kill -signal_number pid ...");
 #ifdef SHELL
 	error(NULL);
 #else

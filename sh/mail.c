@@ -72,19 +72,19 @@ void
 chkmail(int silent)
 {
 	int i;
-	const char *mpath;
-	char *p;
-	char *q;
+	const char* mpath;
+	char* p;
+	char* q;
 	struct stackmark smark;
 	struct stat statb;
-
 	if (silent)
 		nmboxes = 10;
 	if (nmboxes == 0)
 		return;
 	setstackmark(&smark);
-	mpath = mpathset()? mpathval() : mailval();
-	for (i = 0 ; i < nmboxes ; i++) {
+	mpath = mpathset() ? mpathval() : mailval();
+	for (i = 0 ; i < nmboxes ; i++)
+	{
 		p = padvance(&mpath, nullstr);
 		if (p == NULL)
 			break;
@@ -97,16 +97,18 @@ chkmail(int silent)
 #ifdef notdef /* this is what the System V shell claims to do (it lies) */
 		if (stat(p, &statb) < 0)
 			statb.st_mtime = 0;
-		if (statb.st_mtime > mailtime[i] && ! silent) {
-			out2str(pathopt? pathopt : "you have mail");
+		if (statb.st_mtime > mailtime[i] && ! silent)
+		{
+			out2str(pathopt ? pathopt : "you have mail");
 			out2c('\n');
 		}
 		mailtime[i] = statb.st_mtime;
 #else /* this is what it should do */
 		if (stat(p, &statb) < 0)
 			statb.st_size = 0;
-		if (statb.st_size > mailtime[i] && ! silent) {
-			out2str(pathopt? pathopt : "you have mail");
+		if (statb.st_size > mailtime[i] && ! silent)
+		{
+			out2str(pathopt ? pathopt : "you have mail");
 			out2c('\n');
 		}
 		mailtime[i] = statb.st_size;

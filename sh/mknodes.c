@@ -33,7 +33,7 @@
 #if 0
 #ifndef lint
 static char const copyright[] =
-"@(#) Copyright (c) 1991, 1993\n\
+	"@(#) Copyright (c) 1991, 1993\n\
 	The Regents of the University of California.  All rights reserved.\n";
 #endif /* not lint */
 
@@ -67,15 +67,17 @@ static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
 #define T_TEMP 6		/* don't copy this field */
 
 
-struct field {			/* a structure field */
-	char *name;		/* name of field */
+struct field  			/* a structure field */
+{
+	char* name;		/* name of field */
 	int type;			/* type of field */
-	char *decl;		/* declaration of field */
+	char* decl;		/* declaration of field */
 };
 
 
-struct str {			/* struct representing a node structure */
-	char *tag;		/* structure tag */
+struct str  			/* struct representing a node structure */
+{
+	char* tag;		/* structure tag */
 	int nfields;		/* number of fields in the structure */
 	struct field field[MAXFIELDS];	/* the fields of the structure */
 	int done;			/* set if fully parsed */
@@ -83,38 +85,39 @@ struct str {			/* struct representing a node structure */
 
 
 static int ntypes;			/* number of node types */
-static char *nodename[MAXTYPES];	/* names of the nodes */
-static struct str *nodestr[MAXTYPES];	/* type of structure used by the node */
+static char* nodename[MAXTYPES];	/* names of the nodes */
+static struct str* nodestr[MAXTYPES];	/* type of structure used by the node */
 static int nstr;			/* number of structures */
 static struct str str[MAXTYPES];	/* the structures */
-static struct str *curstr;		/* current structure */
-static FILE *infp;
+static struct str* curstr;		/* current structure */
+static FILE* infp;
 static char line[1024];
 static int linno;
-static char *linep;
+static char* linep;
 
 static void parsenode(void);
 static void parsefield(void);
-static void output(char *);
-static void outsizes(FILE *);
-static void outfunc(FILE *, int);
-static void indent(int, FILE *);
-static int nextfield(char *);
+static void output(char*);
+static void outsizes(FILE*);
+static void outfunc(FILE*, int);
+static void indent(int, FILE*);
+static int nextfield(char*);
 static void skipbl(void);
 static int readline(void);
-static void error(const char *, ...) /*__printf0like(1, 2) __dead2*/;
-static char *savestr(const char *);
+static void error(const char*, ...) /*__printf0like(1, 2) __dead2*/;
+static char* savestr(const char*);
 
 
 int
-main(int argc, char *argv[])
+main(int argc, char* argv[])
 {
 	if (argc != 3)
 		error("usage: mknodes file");
 	infp = stdin;
 	if ((infp = fopen(argv[1], "r")) == NULL)
 		error("Can't open %s: %s", argv[1], strerror(errno));
-	while (readline()) {
+	while (readline())
+	{
 		if (line[0] == ' ' || line[0] == '\t')
 			parsefield();
 		else if (line[0] != '\0')
@@ -131,8 +134,7 @@ parsenode(void)
 {
 	char name[BUFLEN];
 	char tag[BUFLEN];
-	struct str *sp;
-
+	struct str* sp;
 	if (curstr && curstr->nfields > 0)
 		curstr->done = 1;
 	nextfield(name);
@@ -141,11 +143,13 @@ parsenode(void)
 	if (*linep != '\0')
 		error("Garbage at end of line");
 	nodename[ntypes] = savestr(name);
-	for (sp = str ; sp < str + nstr ; sp++) {
+	for (sp = str ; sp < str + nstr ; sp++)
+	{
 		if (strcmp(sp->tag, tag) == 0)
 			break;
 	}
-	if (sp >= str + nstr) {
+	if (sp >= str + nstr)
+	{
 		sp->tag = savestr(tag);
 		sp->nfields = 0;
 		curstr = sp;
@@ -162,8 +166,7 @@ parsefield(void)
 	char name[BUFLEN];
 	char type[BUFLEN];
 	char decl[2 * BUFLEN];
-	struct field *fp;
-
+	struct field* fp;
 	if (curstr == NULL || curstr->done)
 		error("No current structure to add field to");
 	if (! nextfield(name))
@@ -172,29 +175,45 @@ parsefield(void)
 		error("No field type");
 	fp = &curstr->field[curstr->nfields];
 	fp->name = savestr(name);
-	if (strcmp(type, "nodeptr") == 0) {
+	if (strcmp(type, "nodeptr") == 0)
+	{
 		fp->type = T_NODE;
 		sprintf(decl, "union node *%s", name);
-	} else if (strcmp(type, "nodelist") == 0) {
+	}
+	else if (strcmp(type, "nodelist") == 0)
+	{
 		fp->type = T_NODELIST;
 		sprintf(decl, "struct nodelist *%s", name);
-	} else if (strcmp(type, "string") == 0) {
+	}
+	else if (strcmp(type, "string") == 0)
+	{
 		fp->type = T_STRING;
 		sprintf(decl, "char *%s", name);
-	} else if (strcmp(type, "int") == 0) {
+	}
+	else if (strcmp(type, "int") == 0)
+	{
 		fp->type = T_INT;
 		sprintf(decl, "int %s", name);
-	} else if (strcmp(type, "other") == 0) {
+	}
+	else if (strcmp(type, "other") == 0)
+	{
 		fp->type = T_OTHER;
-	} else if (strcmp(type, "temp") == 0) {
+	}
+	else if (strcmp(type, "temp") == 0)
+	{
 		fp->type = T_TEMP;
-	} else {
+	}
+	else
+	{
 		error("Unknown type %s", type);
 	}
-	if (fp->type == T_OTHER || fp->type == T_TEMP) {
+	if (fp->type == T_OTHER || fp->type == T_TEMP)
+	{
 		skipbl();
 		fp->decl = savestr(linep);
-	} else {
+	}
+	else
+	{
 		if (*linep)
 			error("Garbage at end of line");
 		fp->decl = savestr(decl);
@@ -210,16 +229,15 @@ char writer[] = "\
 \n";
 
 static void
-output(char *file)
+output(char* file)
 {
-	FILE *hfile;
-	FILE *cfile;
-	FILE *patfile;
+	FILE* hfile;
+	FILE* cfile;
+	FILE* patfile;
 	int i;
-	struct str *sp;
-	struct field *fp;
-	char *p;
-
+	struct str* sp;
+	struct field* fp;
+	char* p;
 	if ((patfile = fopen(file, "r")) == NULL)
 		error("Can't open %s: %s", file, strerror(errno));
 	if ((hfile = fopen("nodes.h", "w")) == NULL)
@@ -230,16 +248,19 @@ output(char *file)
 	for (i = 0 ; i < ntypes ; i++)
 		fprintf(hfile, "#define %s %d\n", nodename[i], i);
 	fputs("\n\n\n", hfile);
-	for (sp = str ; sp < &str[nstr] ; sp++) {
+	for (sp = str ; sp < &str[nstr] ; sp++)
+	{
 		fprintf(hfile, "struct %s {\n", sp->tag);
-		for (i = sp->nfields, fp = sp->field ; --i >= 0 ; fp++) {
+		for (i = sp->nfields, fp = sp->field ; --i >= 0 ; fp++)
+		{
 			fprintf(hfile, "      %s;\n", fp->decl);
 		}
 		fputs("};\n\n\n", hfile);
 	}
 	fputs("union node {\n", hfile);
 	fprintf(hfile, "      int type;\n");
-	for (sp = str ; sp < &str[nstr] ; sp++) {
+	for (sp = str ; sp < &str[nstr] ; sp++)
+	{
 		fprintf(hfile, "      struct %s %s;\n", sp->tag, sp->tag);
 	}
 	fputs("};\n\n\n", hfile);
@@ -252,9 +273,9 @@ output(char *file)
 	fputs("union node *getfuncnode(struct funcdef *);\n", hfile);
 	fputs("void reffunc(struct funcdef *);\n", hfile);
 	fputs("void unreffunc(struct funcdef *);\n", hfile);
-
 	fputs(writer, cfile);
-	while (fgets(line, sizeof line, patfile) != NULL) {
+	while (fgets(line, sizeof line, patfile) != NULL)
+	{
 		for (p = line ; *p == ' ' || *p == '\t' ; p++);
 		if (strcmp(p, "%SIZES\n") == 0)
 			outsizes(cfile);
@@ -270,12 +291,12 @@ output(char *file)
 
 
 static void
-outsizes(FILE *cfile)
+outsizes(FILE* cfile)
 {
 	int i;
-
 	fprintf(cfile, "static const short nodesize[%d] = {\n", ntypes);
-	for (i = 0 ; i < ntypes ; i++) {
+	for (i = 0 ; i < ntypes ; i++)
+	{
 		fprintf(cfile, "      ALIGN(sizeof (struct %s)),\n", nodestr[i]->tag);
 	}
 	fprintf(cfile, "};\n");
@@ -283,12 +304,11 @@ outsizes(FILE *cfile)
 
 
 static void
-outfunc(FILE *cfile, int calcsize)
+outfunc(FILE* cfile, int calcsize)
 {
-	struct str *sp;
-	struct field *fp;
+	struct str* sp;
+	struct field* fp;
 	int i;
-
 	fputs("      if (n == NULL)\n", cfile);
 	if (calcsize)
 		fputs("	    return;\n", cfile);
@@ -296,60 +316,75 @@ outfunc(FILE *cfile, int calcsize)
 		fputs("	    return NULL;\n", cfile);
 	if (calcsize)
 		fputs("      funcblocksize += nodesize[n->type];\n", cfile);
-	else {
+	else
+	{
 		fputs("      new = funcblock;\n", cfile);
 		fputs("      funcblock = (char *)funcblock + nodesize[n->type];\n", cfile);
 	}
 	fputs("      switch (n->type) {\n", cfile);
-	for (sp = str ; sp < &str[nstr] ; sp++) {
-		for (i = 0 ; i < ntypes ; i++) {
+	for (sp = str ; sp < &str[nstr] ; sp++)
+	{
+		for (i = 0 ; i < ntypes ; i++)
+		{
 			if (nodestr[i] == sp)
 				fprintf(cfile, "      case %s:\n", nodename[i]);
 		}
-		for (i = sp->nfields ; --i >= 1 ; ) {
+		for (i = sp->nfields ; --i >= 1 ;)
+		{
 			fp = &sp->field[i];
-			switch (fp->type) {
-			case T_NODE:
-				if (calcsize) {
-					indent(12, cfile);
-					fprintf(cfile, "calcsize(n->%s.%s);\n",
-						sp->tag, fp->name);
-				} else {
-					indent(12, cfile);
-					fprintf(cfile, "new->%s.%s = copynode(n->%s.%s);\n",
-						sp->tag, fp->name, sp->tag, fp->name);
-				}
-				break;
-			case T_NODELIST:
-				if (calcsize) {
-					indent(12, cfile);
-					fprintf(cfile, "sizenodelist(n->%s.%s);\n",
-						sp->tag, fp->name);
-				} else {
-					indent(12, cfile);
-					fprintf(cfile, "new->%s.%s = copynodelist(n->%s.%s);\n",
-						sp->tag, fp->name, sp->tag, fp->name);
-				}
-				break;
-			case T_STRING:
-				if (calcsize) {
-					indent(12, cfile);
-					fprintf(cfile, "funcstringsize += strlen(n->%s.%s) + 1;\n",
-						sp->tag, fp->name);
-				} else {
-					indent(12, cfile);
-					fprintf(cfile, "new->%s.%s = nodesavestr(n->%s.%s);\n",
-						sp->tag, fp->name, sp->tag, fp->name);
-				}
-				break;
-			case T_INT:
-			case T_OTHER:
-				if (! calcsize) {
-					indent(12, cfile);
-					fprintf(cfile, "new->%s.%s = n->%s.%s;\n",
-						sp->tag, fp->name, sp->tag, fp->name);
-				}
-				break;
+			switch (fp->type)
+			{
+				case T_NODE:
+					if (calcsize)
+					{
+						indent(12, cfile);
+						fprintf(cfile, "calcsize(n->%s.%s);\n",
+								sp->tag, fp->name);
+					}
+					else
+					{
+						indent(12, cfile);
+						fprintf(cfile, "new->%s.%s = copynode(n->%s.%s);\n",
+								sp->tag, fp->name, sp->tag, fp->name);
+					}
+					break;
+				case T_NODELIST:
+					if (calcsize)
+					{
+						indent(12, cfile);
+						fprintf(cfile, "sizenodelist(n->%s.%s);\n",
+								sp->tag, fp->name);
+					}
+					else
+					{
+						indent(12, cfile);
+						fprintf(cfile, "new->%s.%s = copynodelist(n->%s.%s);\n",
+								sp->tag, fp->name, sp->tag, fp->name);
+					}
+					break;
+				case T_STRING:
+					if (calcsize)
+					{
+						indent(12, cfile);
+						fprintf(cfile, "funcstringsize += strlen(n->%s.%s) + 1;\n",
+								sp->tag, fp->name);
+					}
+					else
+					{
+						indent(12, cfile);
+						fprintf(cfile, "new->%s.%s = nodesavestr(n->%s.%s);\n",
+								sp->tag, fp->name, sp->tag, fp->name);
+					}
+					break;
+				case T_INT:
+				case T_OTHER:
+					if (! calcsize)
+					{
+						indent(12, cfile);
+						fprintf(cfile, "new->%s.%s = n->%s.%s;\n",
+								sp->tag, fp->name, sp->tag, fp->name);
+					}
+					break;
 			}
 		}
 		indent(12, cfile);
@@ -362,23 +397,24 @@ outfunc(FILE *cfile, int calcsize)
 
 
 static void
-indent(int amount, FILE *fp)
+indent(int amount, FILE* fp)
 {
-	while (amount >= 8) {
+	while (amount >= 8)
+	{
 		putc('\t', fp);
 		amount -= 8;
 	}
-	while (--amount >= 0) {
+	while (--amount >= 0)
+	{
 		putc(' ', fp);
 	}
 }
 
 
 static int
-nextfield(char *buf)
+nextfield(char* buf)
 {
-	char *p, *q;
-
+	char* p, *q;
 	p = linep;
 	while (*p == ' ' || *p == '\t')
 		p++;
@@ -402,8 +438,7 @@ skipbl(void)
 static int
 readline(void)
 {
-	char *p;
-
+	char* p;
 	if (fgets(line, 1024, infp) == NULL)
 		return 0;
 	for (p = line ; *p != '#' && *p != '\n' && *p != '\0' ; p++);
@@ -420,27 +455,23 @@ readline(void)
 
 
 static void
-error(const char *msg, ...)
+error(const char* msg, ...)
 {
 	va_list va;
 	va_start(va, msg);
-
 	(void) fprintf(stderr, "line %d: ", linno);
 	(void) vfprintf(stderr, msg, va);
 	(void) fputc('\n', stderr);
-
 	va_end(va);
-
 	exit(2);
 }
 
 
 
-static char *
-savestr(const char *s)
+static char*
+savestr(const char* s)
 {
-	char *p;
-
+	char* p;
 	if ((p = malloc(strlen(s) + 1)) == NULL)
 		error("Out of space");
 	(void) strcpy(p, s);

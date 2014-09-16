@@ -72,13 +72,13 @@
  */
 #define NEOF ((union node *)-1)
 extern int whichprompt;		/* 1 == PS1, 2 == PS2 */
-extern const char *const parsekwd[];
+extern const char* const parsekwd[];
 
 
-union node *parsecmd(int);
+union node* parsecmd(int);
 void forcealias(void);
-void fixredir(union node *, const char *, int);
-int goodname(const char *);
-int isassignment(const char *);
-char *getprompt(void *);
-const char *expandstr(const char *);
+void fixredir(union node*, const char*, int);
+int goodname(const char*);
+int isassignment(const char*);
+char* getprompt(void*);
+const char* expandstr(const char*);

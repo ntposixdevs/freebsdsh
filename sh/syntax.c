@@ -7,7 +7,8 @@
 #include "syntax.h"
 
 /* syntax table used when not in quotes */
-const char basesyntax[SYNBASE + CHAR_MAX + 1] = {
+const char basesyntax[SYNBASE + CHAR_MAX + 1] =
+{
 	[SYNBASE + PEOF] = CEOF,
 	[SYNBASE + CTLESC] = CCTL,
 	[SYNBASE + CTLVAR] = CCTL,
@@ -37,7 +38,8 @@ const char basesyntax[SYNBASE + CHAR_MAX + 1] = {
 };
 
 /* syntax table used when in double quotes */
-const char dqsyntax[SYNBASE + CHAR_MAX + 1] = {
+const char dqsyntax[SYNBASE + CHAR_MAX + 1] =
+{
 	[SYNBASE + PEOF] = CEOF,
 	[SYNBASE + CTLESC] = CCTL,
 	[SYNBASE + CTLVAR] = CCTL,
@@ -68,7 +70,8 @@ const char dqsyntax[SYNBASE + CHAR_MAX + 1] = {
 };
 
 /* syntax table used when in single quotes */
-const char sqsyntax[SYNBASE + CHAR_MAX + 1] = {
+const char sqsyntax[SYNBASE + CHAR_MAX + 1] =
+{
 	[SYNBASE + PEOF] = CEOF,
 	[SYNBASE + CTLESC] = CCTL,
 	[SYNBASE + CTLVAR] = CCTL,
@@ -96,7 +99,8 @@ const char sqsyntax[SYNBASE + CHAR_MAX + 1] = {
 };
 
 /* syntax table used when in arithmetic */
-const char arisyntax[SYNBASE + CHAR_MAX + 1] = {
+const char arisyntax[SYNBASE + CHAR_MAX + 1] =
+{
 	[SYNBASE + PEOF] = CEOF,
 	[SYNBASE + CTLESC] = CCTL,
 	[SYNBASE + CTLVAR] = CCTL,
@@ -118,7 +122,8 @@ const char arisyntax[SYNBASE + CHAR_MAX + 1] = {
 };
 
 /* character classification table */
-const char is_type[SYNBASE + CHAR_MAX + 1] = {
+const char is_type[SYNBASE + CHAR_MAX + 1] =
+{
 	[SYNBASE + '0'] = ISDIGIT,
 	[SYNBASE + '1'] = ISDIGIT,
 	[SYNBASE + '2'] = ISDIGIT,

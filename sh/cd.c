@@ -65,53 +65,53 @@ __FBSDID("$FreeBSD: head/bin/sh/cd.c 258776 2013-11-30 21:27:11Z jilles $");
 #include "cd.h"
 #include "builtins.h"
 
-static int cdlogical(char *);
-static int cdphysical(char *);
-static int docd(char *, int, int);
-static char *getcomponent(void);
-static char *findcwd(char *);
-static void updatepwd(char *);
-static char *getpwd(void);
-static char *getpwd2(void);
+static int cdlogical(char*);
+static int cdphysical(char*);
+static int docd(char*, int, int);
+static char* getcomponent(void);
+static char* findcwd(char*);
+static void updatepwd(char*);
+static char* getpwd(void);
+static char* getpwd2(void);
 
-static char *curdir = NULL;	/* current working directory */
-static char *prevdir;		/* previous working directory */
-static char *cdcomppath;
+static char* curdir = NULL;	/* current working directory */
+static char* prevdir;		/* previous working directory */
+static char* cdcomppath;
 
 int
-cdcmd(int argc __unused, char **argv __unused)
+cdcmd(int argc __unused, char** argv __unused)
 {
-	const char *dest;
-	const char *path;
-	char *p;
+	const char* dest;
+	const char* path;
+	char* p;
 	struct stat statb;
 	int ch, phys, print = 0, getcwderr = 0;
 	int rc;
 	int errno1 = ENOENT;
-
 	phys = Pflag;
-	while ((ch = nextopt("eLP")) != '\0') {
-		switch (ch) {
-		case 'e':
-			getcwderr = 1;
-			break;
-		case 'L':
-			phys = 0;
-			break;
-		case 'P':
-			phys = 1;
-			break;
+	while ((ch = nextopt("eLP")) != '\0')
+	{
+		switch (ch)
+		{
+			case 'e':
+				getcwderr = 1;
+				break;
+			case 'L':
+				phys = 0;
+				break;
+			case 'P':
+				phys = 1;
+				break;
 		}
 	}
-
 	if (*argptr != NULL && argptr[1] != NULL)
 		error("too many arguments");
-
 	if ((dest = *argptr) == NULL && (dest = bltinlookup("HOME", 1)) == NULL)
 		error("HOME not set");
 	if (*dest == '\0')
 		dest = ".";
-	if (dest[0] == '-' && dest[1] == '\0') {
+	if (dest[0] == '-' && dest[1] == '\0')
+	{
 		dest = prevdir ? prevdir : curdir;
 		if (dest)
 			print = 1;
@@ -119,18 +119,23 @@ cdcmd(int argc __unused, char **argv __unused)
 			dest = ".";
 	}
 	if (dest[0] == '/' ||
-	    (dest[0] == '.' && (dest[1] == '/' || dest[1] == '\0')) ||
-	    (dest[0] == '.' && dest[1] == '.' && (dest[2] == '/' || dest[2] == '\0')) ||
-	    (path = bltinlookup("CDPATH", 1)) == NULL)
+			(dest[0] == '.' && (dest[1] == '/' || dest[1] == '\0')) ||
+			(dest[0] == '.' && dest[1] == '.' && (dest[2] == '/' || dest[2] == '\0')) ||
+			(path = bltinlookup("CDPATH", 1)) == NULL)
 		path = nullstr;
-	while ((p = padvance(&path, dest)) != NULL) {
-		if (stat(p, &statb) < 0) {
+	while ((p = padvance(&path, dest)) != NULL)
+	{
+		if (stat(p, &statb) < 0)
+		{
 			if (errno != ENOENT)
 				errno1 = errno;
-		} else if (!S_ISDIR(statb.st_mode))
+		}
+		else if (!S_ISDIR(statb.st_mode))
 			errno1 = ENOTDIR;
-		else {
-			if (!print) {
+		else
+		{
+			if (!print)
+			{
 				/*
 				 * XXX - rethink
 				 */
@@ -157,33 +162,28 @@ cdcmd(int argc __unused, char **argv __unused)
  * directory name if "print" is nonzero.
  */
 static int
-docd(char *dest, int print, int phys)
+docd(char* dest, int print, int phys)
 {
 	int rc;
-
 	TRACE(("docd(\"%s\", %d, %d) called\n", dest, print, phys));
-
 	/* If logical cd fails, fall back to physical. */
 	if ((phys || (rc = cdlogical(dest)) < 0) && (rc = cdphysical(dest)) < 0)
 		return (-1);
-
 	if (print && iflag && curdir)
 		out1fmt("%s\n", curdir);
-
 	return (rc);
 }
 
 static int
-cdlogical(char *dest)
+cdlogical(char* dest)
 {
-	char *p;
-	char *q;
-	char *component;
+	char* p;
+	char* q;
+	char* component;
 	struct stat statb;
 	int first;
 	int badstat;
 	size_t len;
-
 	/*
 	 *  Check each component of the path. If we find a symlink or
 	 *  something we can't stat, clear curdir to force a getcwd()
@@ -194,12 +194,14 @@ cdlogical(char *dest)
 	cdcomppath = stalloc(len + 1);
 	memcpy(cdcomppath, dest, len + 1);
 	STARTSTACKSTR(p);
-	if (*dest == '/') {
+	if (*dest == '/')
+	{
 		STPUTC('/', p);
 		cdcomppath++;
 	}
 	first = 1;
-	while ((q = getcomponent()) != NULL) {
+	while ((q = getcomponent()) != NULL)
+	{
 		if (q[0] == '\0' || (q[0] == '.' && q[1] == '\0'))
 			continue;
 		if (! first)
@@ -210,14 +212,15 @@ cdlogical(char *dest)
 		if (equal(component, ".."))
 			continue;
 		STACKSTRNUL(p);
-		if (lstat(stackblock(), &statb) < 0) {
+		if (lstat(stackblock(), &statb) < 0)
+		{
 			badstat = 1;
 			break;
 		}
 	}
-
 	INTOFF;
-	if ((p = findcwd(badstat ? NULL : dest)) == NULL || chdir(p) < 0) {
+	if ((p = findcwd(badstat ? NULL : dest)) == NULL || chdir(p) < 0)
+	{
 		INTON;
 		return (-1);
 	}
@@ -227,18 +230,19 @@ cdlogical(char *dest)
 }
 
 static int
-cdphysical(char *dest)
+cdphysical(char* dest)
 {
-	char *p;
+	char* p;
 	int rc = 0;
-
 	INTOFF;
-	if (chdir(dest) < 0) {
+	if (chdir(dest) < 0)
+	{
 		INTON;
 		return (-1);
 	}
 	p = findcwd(NULL);
-	if (p == NULL) {
+	if (p == NULL)
+	{
 		warning("warning: failed to get name of current directory");
 		rc = 1;
 	}
@@ -251,20 +255,22 @@ cdphysical(char *dest)
  * Get the next component of the path name pointed to by cdcomppath.
  * This routine overwrites the string pointed to by cdcomppath.
  */
-static char *
+static char*
 getcomponent(void)
 {
-	char *p;
-	char *start;
-
+	char* p;
+	char* start;
 	if ((p = cdcomppath) == NULL)
 		return NULL;
 	start = cdcomppath;
 	while (*p != '/' && *p != '\0')
 		p++;
-	if (*p == '\0') {
+	if (*p == '\0')
+	{
 		cdcomppath = NULL;
-	} else {
+	}
+	else
+	{
 		*p++ = '\0';
 		cdcomppath = p;
 	}
@@ -272,13 +278,12 @@ getcomponent(void)
 }
 
 
-static char *
-findcwd(char *dir)
+static char*
+findcwd(char* dir)
 {
-	char *new;
-	char *p;
+	char* new;
+	char* p;
 	size_t len;
-
 	/*
 	 * If our argument is NULL, we don't know the current directory
 	 * any more because we traversed a symbolic link or something
@@ -290,15 +295,20 @@ findcwd(char *dir)
 	cdcomppath = stalloc(len + 1);
 	memcpy(cdcomppath, dir, len + 1);
 	STARTSTACKSTR(new);
-	if (*dir != '/') {
+	if (*dir != '/')
+	{
 		STPUTS(curdir, new);
 		if (STTOPC(new) == '/')
 			STUNPUTC(new);
 	}
-	while ((p = getcomponent()) != NULL) {
-		if (equal(p, "..")) {
+	while ((p = getcomponent()) != NULL)
+	{
+		if (equal(p, ".."))
+		{
 			while (new > stackblock() && (STUNPUTC(new), *new) != '/');
-		} else if (*p != '\0' && ! equal(p, ".")) {
+		}
+		else if (*p != '\0' && ! equal(p, "."))
+		{
 			STPUTC('/', new);
 			STPUTS(p, new);
 		}
@@ -315,10 +325,9 @@ findcwd(char *dir)
  * that the current directory has changed.
  */
 static void
-updatepwd(char *dir)
+updatepwd(char* dir)
 {
 	hashcd();				/* update command hash table */
-
 	if (prevdir)
 		ckfree(prevdir);
 	prevdir = curdir;
@@ -328,54 +337,52 @@ updatepwd(char *dir)
 }
 
 int
-pwdcmd(int argc __unused, char **argv __unused)
+pwdcmd(int argc __unused, char** argv __unused)
 {
-	char *p;
+	char* p;
 	int ch, phys;
-
 	phys = Pflag;
-	while ((ch = nextopt("LP")) != '\0') {
-		switch (ch) {
-		case 'L':
-			phys = 0;
-			break;
-		case 'P':
-			phys = 1;
-			break;
+	while ((ch = nextopt("LP")) != '\0')
+	{
+		switch (ch)
+		{
+			case 'L':
+				phys = 0;
+				break;
+			case 'P':
+				phys = 1;
+				break;
 		}
 	}
-
 	if (*argptr != NULL)
 		error("too many arguments");
-
-	if (!phys && getpwd()) {
+	if (!phys && getpwd())
+	{
 		out1str(curdir);
 		out1c('\n');
-	} else {
+	}
+	else
+	{
 		if ((p = getpwd2()) == NULL)
 			error(".: %s", strerror(errno));
 		out1str(p);
 		out1c('\n');
 	}
-
 	return 0;
 }
 
 /*
  * Get the current directory and cache the result in curdir.
  */
-static char *
+static char*
 getpwd(void)
 {
-	char *p;
-
+	char* p;
 	if (curdir)
 		return curdir;
-
 	p = getpwd2();
 	if (p != NULL)
 		curdir = savestr(p);
-
 	return curdir;
 }
 
@@ -384,13 +391,13 @@ getpwd(void)
 /*
  * Return the current directory.
  */
-static char *
+static char*
 getpwd2(void)
 {
-	char *pwd;
+	char* pwd;
 	int i;
-
-	for (i = MAXPWD;; i *= 2) {
+	for (i = MAXPWD;; i *= 2)
+	{
 		pwd = stalloc(i);
 		if (getcwd(pwd, i) != NULL)
 			return pwd;
@@ -398,7 +405,6 @@ getpwd2(void)
 		if (errno != ERANGE)
 			break;
 	}
-
 	return NULL;
 }
 
@@ -409,14 +415,14 @@ getpwd2(void)
 void
 pwd_init(int warn)
 {
-	char *pwd;
+	char* pwd;
 	struct stat stdot, stpwd;
-
 	pwd = lookupvar("PWD");
 	if (pwd && *pwd == '/' && stat(".", &stdot) != -1 &&
-	    stat(pwd, &stpwd) != -1 &&
-	    stdot.st_dev == stpwd.st_dev &&
-	    stdot.st_ino == stpwd.st_ino) {
+			stat(pwd, &stpwd) != -1 &&
+			stdot.st_dev == stpwd.st_dev &&
+			stdot.st_ino == stpwd.st_ino)
+	{
 		if (curdir)
 			ckfree(curdir);
 		curdir = savestr(pwd);

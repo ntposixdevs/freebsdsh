@@ -33,17 +33,18 @@
  * $FreeBSD: head/bin/sh/eval.h 255215 2013-09-04 22:10:16Z jilles $
  */
 
-extern char *commandname;	/* currently executing command */
+extern char* commandname;	/* currently executing command */
 extern int exitstatus;		/* exit status of last command */
 extern int oexitstatus;		/* saved exit status */
-extern struct strlist *cmdenviron;  /* environment for builtin command */
+extern struct strlist* cmdenviron;  /* environment for builtin command */
 
 
-struct backcmd {		/* result of evalbackcmd */
+struct backcmd  		/* result of evalbackcmd */
+{
 	int fd;			/* file descriptor to read from */
-	char *buf;		/* buffer */
+	char* buf;		/* buffer */
 	int nleft;		/* number of chars in buffer */
-	struct job *jp;		/* job structure for command */
+	struct job* jp;		/* job structure for command */
 };
 
 void reseteval(void);
@@ -53,10 +54,10 @@ void reseteval(void);
 #define EV_TESTED 02		/* exit status is checked; ignore -e flag */
 #define EV_BACKCMD 04		/* command executing within back quotes */
 
-void evalstring(char *, int);
+void evalstring(char*, int);
 union node;	/* BLETCH for ansi C */
-void evaltree(union node *, int);
-void evalbackcmd(union node *, struct backcmd *);
+void evaltree(union node*, int);
+void evalbackcmd(union node*, struct backcmd*);
 
 /* in_function returns nonzero if we are currently evaluating a function */
 #define in_function()	funcnest

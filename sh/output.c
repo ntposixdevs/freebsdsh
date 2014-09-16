@@ -67,83 +67,85 @@ __FBSDID("$FreeBSD: head/bin/sh/output.c 253649 2013-07-25 13:09:17Z jilles $");
 #define MEM_OUT -2		/* output to dynamically allocated memory */
 #define OUTPUT_ERR 01		/* error occurred on output */
 
-static int doformat_wr(void *, const char *, int);
+static int doformat_wr(void*, const char*, int);
 
 struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
 struct output errout = {NULL, 0, NULL, 256, 2, 0};
 struct output memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
-struct output *out1 = &output;
-struct output *out2 = &errout;
+struct output* out1 = &output;
+struct output* out2 = &errout;
 
 void
-outcslow(int c, struct output *file)
+outcslow(int c, struct output* file)
 {
 	outc(c, file);
 }
 
 void
-out1str(const char *p)
+out1str(const char* p)
 {
 	outstr(p, out1);
 }
 
 void
-out1qstr(const char *p)
+out1qstr(const char* p)
 {
 	outqstr(p, out1);
 }
 
 void
-out2str(const char *p)
+out2str(const char* p)
 {
 	outstr(p, out2);
 }
 
 void
-out2qstr(const char *p)
+out2qstr(const char* p)
 {
 	outqstr(p, out2);
 }
 
 void
-outstr(const char *p, struct output *file)
+outstr(const char* p, struct output* file)
 {
 	outbin(p, strlen(p), file);
 }
 
 /* Like outstr(), but quote for re-input into the shell. */
 void
-outqstr(const char *p, struct output *file)
+outqstr(const char* p, struct output* file)
 {
 	char ch;
 	int inquotes;
-
-	if (p[0] == '\0') {
+	if (p[0] == '\0')
+	{
 		outstr("''", file);
 		return;
 	}
 	/* Caller will handle '=' if necessary */
 	if (p[strcspn(p, "|&;<>()$`\\\"' \t\n*?[~#")] == '\0' ||
-			strcmp(p, "[") == 0) {
+			strcmp(p, "[") == 0)
+	{
 		outstr(p, file);
 		return;
 	}
-
 	inquotes = 0;
-	while ((ch = *p++) != '\0') {
-		switch (ch) {
-		case '\'':
-			/* Can't quote single quotes inside single quotes. */
-			if (inquotes)
-				outcslow('\'', file);
-			inquotes = 0;
-			outstr("\\'", file);
-			break;
-		default:
-			if (!inquotes)
-				outcslow('\'', file);
-			inquotes = 1;
-			outc(ch, file);
+	while ((ch = *p++) != '\0')
+	{
+		switch (ch)
+		{
+			case '\'':
+				/* Can't quote single quotes inside single quotes. */
+				if (inquotes)
+					outcslow('\'', file);
+				inquotes = 0;
+				outstr("\\'", file);
+				break;
+			default:
+				if (!inquotes)
+					outcslow('\'', file);
+				inquotes = 1;
+				outc(ch, file);
 		}
 	}
 	if (inquotes)
@@ -151,27 +153,28 @@ outqstr(const char *p, struct output *file)
 }
 
 void
-outbin(const void *data, size_t len, struct output *file)
+outbin(const void* data, size_t len, struct output* file)
 {
-	const char *p;
-
+	const char* p;
 	p = data;
 	while (len-- > 0)
 		outc(*p++, file);
 }
 
 void
-emptyoutbuf(struct output *dest)
+emptyoutbuf(struct output* dest)
 {
 	int offset;
-
-	if (dest->buf == NULL) {
+	if (dest->buf == NULL)
+	{
 		INTOFF;
 		dest->buf = ckmalloc(dest->bufsize);
 		dest->nextc = dest->buf;
 		dest->nleft = dest->bufsize;
 		INTON;
-	} else if (dest->fd == MEM_OUT) {
+	}
+	else if (dest->fd == MEM_OUT)
+	{
 		offset = dest->bufsize;
 		INTOFF;
 		dest->bufsize <<= 1;
@@ -179,7 +182,9 @@ emptyoutbuf(struct output *dest)
 		dest->nleft = dest->bufsize - offset;
 		dest->nextc = dest->buf + offset;
 		INTON;
-	} else {
+	}
+	else
+	{
 		flushout(dest);
 	}
 	dest->nleft--;
@@ -195,9 +200,8 @@ flushall(void)
 
 
 void
-flushout(struct output *dest)
+flushout(struct output* dest)
 {
-
 	if (dest->buf == NULL || dest->nextc == dest->buf || dest->fd < 0)
 		return;
 	if (xwrite(dest->fd, dest->buf, dest->nextc - dest->buf) < 0)
@@ -211,7 +215,8 @@ void
 freestdout(void)
 {
 	INTOFF;
-	if (output.buf) {
+	if (output.buf)
+	{
 		ckfree(output.buf);
 		output.buf = NULL;
 		output.nleft = 0;
@@ -221,24 +226,23 @@ freestdout(void)
 
 
 int
-outiserror(struct output *file)
+outiserror(struct output* file)
 {
 	return (file->flags & OUTPUT_ERR);
 }
 
 
 void
-outclearerror(struct output *file)
+outclearerror(struct output* file)
 {
 	file->flags &= ~OUTPUT_ERR;
 }
 
 
 void
-outfmt(struct output *file, const char *fmt, ...)
+outfmt(struct output* file, const char* fmt, ...)
 {
 	va_list ap;
-
 	va_start(ap, fmt);
 	doformat(file, fmt, ap);
 	va_end(ap);
@@ -246,20 +250,18 @@ outfmt(struct output *file, const char *fmt, ...)
 
 
 void
-out1fmt(const char *fmt, ...)
+out1fmt(const char* fmt, ...)
 {
 	va_list ap;
-
 	va_start(ap, fmt);
 	doformat(out1, fmt, ap);
 	va_end(ap);
 }
 
 void
-out2fmt_flush(const char *fmt, ...)
+out2fmt_flush(const char* fmt, ...)
 {
 	va_list ap;
-
 	va_start(ap, fmt);
 	doformat(out2, fmt, ap);
 	va_end(ap);
@@ -267,10 +269,9 @@ out2fmt_flush(const char *fmt, ...)
 }
 
 void
-fmtstr(char *outbuf, int length, const char *fmt, ...)
+fmtstr(char* outbuf, int length, const char* fmt, ...)
 {
 	va_list ap;
-
 	INTOFF;
 	va_start(ap, fmt);
 	vsnprintf(outbuf, length, fmt, ap);
@@ -279,22 +280,20 @@ fmtstr(char *outbuf, int length, const char *fmt, ...)
 }
 
 static int
-doformat_wr(void *cookie, const char *buf, int len)
+doformat_wr(void* cookie, const char* buf, int len)
 {
-	struct output *o;
-
-	o = (struct output *)cookie;
+	struct output* o;
+	o = (struct output*)cookie;
 	outbin(buf, len, o);
-
 	return (len);
 }
 
 void
-doformat(struct output *dest, const char *f, va_list ap)
+doformat(struct output* dest, const char* f, va_list ap)
 {
-	FILE *fp;
-
-	if ((fp = fwopen(dest, doformat_wr)) != NULL) {
+	FILE* fp;
+	if ((fp = fwopen(dest, doformat_wr)) != NULL)
+	{
 		vfprintf(fp, f, ap);
 		fclose(fp);
 	}
@@ -305,25 +304,30 @@ doformat(struct output *dest, const char *f, va_list ap)
  */
 
 int
-xwrite(int fd, const char *buf, int nbytes)
+xwrite(int fd, const char* buf, int nbytes)
 {
 	int ntry;
 	int i;
 	int n;
-
 	n = nbytes;
 	ntry = 0;
-	for (;;) {
+	for (;;)
+	{
 		i = write(fd, buf, n);
-		if (i > 0) {
+		if (i > 0)
+		{
 			if ((n -= i) <= 0)
 				return nbytes;
 			buf += i;
 			ntry = 0;
-		} else if (i == 0) {
+		}
+		else if (i == 0)
+		{
 			if (++ntry > 10)
 				return nbytes - n;
-		} else if (errno != EINTR) {
+		}
+		else if (errno != EINTR)
+		{
 			return -1;
 		}
 	}

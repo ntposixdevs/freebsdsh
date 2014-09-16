@@ -66,14 +66,15 @@ __FBSDID("$FreeBSD: head/bin/sh/redir.c 263777 2014-03-26 20:43:40Z jilles $");
 #define CLOSED -1		/* fd was not open before redir */
 
 
-struct redirtab {
-	struct redirtab *next;
+struct redirtab
+{
+	struct redirtab* next;
 	int renamed[10];
 	int fd0_redirected;
 };
 
 
-static struct redirtab *redirlist;
+static struct redirtab* redirlist;
 
 /*
  * We keep track of whether or not fd0 has been redirected.  This is for
@@ -82,8 +83,8 @@ static struct redirtab *redirlist;
 */
 static int fd0_redirected = 0;
 
-static void openredirect(union node *, char[10 ]);
-static int openhere(union node *);
+static void openredirect(union node*, char[10 ]);
+static int openhere(union node*);
 
 
 /*
@@ -102,45 +103,48 @@ static int openhere(union node *);
  */
 
 void
-redirect(union node *redir, int flags)
+redirect(union node* redir, int flags)
 {
-	union node *n;
-	struct redirtab *sv = NULL;
+	union node* n;
+	struct redirtab* sv = NULL;
 	int i;
 	int fd;
 	char memory[10];	/* file descriptors to write to memory */
-
 	INTOFF;
-	for (i = 10 ; --i >= 0 ; )
+	for (i = 10 ; --i >= 0 ;)
 		memory[i] = 0;
 	memory[1] = flags & REDIR_BACKQ;
-	if (flags & REDIR_PUSH) {
-		sv = ckmalloc(sizeof (struct redirtab));
+	if (flags & REDIR_PUSH)
+	{
+		sv = ckmalloc(sizeof(struct redirtab));
 		for (i = 0 ; i < 10 ; i++)
 			sv->renamed[i] = EMPTY;
 		sv->fd0_redirected = fd0_redirected;
 		sv->next = redirlist;
 		redirlist = sv;
 	}
-	for (n = redir ; n ; n = n->nfile.next) {
+	for (n = redir ; n ; n = n->nfile.next)
+	{
 		fd = n->nfile.fd;
 		if (fd == 0)
 			fd0_redirected = 1;
 		if ((n->nfile.type == NTOFD || n->nfile.type == NFROMFD) &&
-		    n->ndup.dupfd == fd)
+				n->ndup.dupfd == fd)
 			continue; /* redirect from/to same file descriptor */
-
-		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY) {
+		if ((flags & REDIR_PUSH) && sv->renamed[fd] == EMPTY)
+		{
 			INTOFF;
-			if ((i = fcntl(fd, F_DUPFD_CLOEXEC, 10)) == -1) {
-				switch (errno) {
-				case EBADF:
-					i = CLOSED;
-					break;
-				default:
-					INTON;
-					error("%d: %s", fd, strerror(errno));
-					break;
+			if ((i = fcntl(fd, F_DUPFD_CLOEXEC, 10)) == -1)
+			{
+				switch (errno)
+				{
+					case EBADF:
+						i = CLOSED;
+						break;
+					default:
+						INTON;
+						error("%d: %s", fd, strerror(errno));
+						break;
 				}
 			}
 			sv->renamed[fd] = i;
@@ -159,85 +163,97 @@ redirect(union node *redir, int flags)
 
 
 static void
-openredirect(union node *redir, char memory[10])
+openredirect(union node* redir, char memory[10])
 {
 	struct stat sb;
 	int fd = redir->nfile.fd;
-	const char *fname;
+	const char* fname;
 	int f;
 	int e;
-
 	memory[fd] = 0;
-	switch (redir->nfile.type) {
-	case NFROM:
-		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_RDONLY)) < 0)
-			error("cannot open %s: %s", fname, strerror(errno));
-movefd:
-		if (f != fd) {
-			if (dup2(f, fd) == -1) {
-				e = errno;
-				close(f);
-				error("%d: %s", fd, strerror(e));
-			}
-			close(f);
-		}
-		break;
-	case NFROMTO:
-		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_RDWR|O_CREAT, 0666)) < 0)
-			error("cannot create %s: %s", fname, strerror(errno));
-		goto movefd;
-	case NTO:
-		if (Cflag) {
+	switch (redir->nfile.type)
+	{
+		case NFROM:
 			fname = redir->nfile.expfname;
-			if (stat(fname, &sb) == -1) {
-				if ((f = open(fname, O_WRONLY|O_CREAT|O_EXCL, 0666)) < 0)
-					error("cannot create %s: %s", fname, strerror(errno));
-			} else if (!S_ISREG(sb.st_mode)) {
-				if ((f = open(fname, O_WRONLY, 0666)) < 0)
-					error("cannot create %s: %s", fname, strerror(errno));
-				if (fstat(f, &sb) != -1 && S_ISREG(sb.st_mode)) {
+			if ((f = open(fname, O_RDONLY)) < 0)
+				error("cannot open %s: %s", fname, strerror(errno));
+movefd:
+			if (f != fd)
+			{
+				if (dup2(f, fd) == -1)
+				{
+					e = errno;
 					close(f);
-					error("cannot create %s: %s", fname,
-					    strerror(EEXIST));
+					error("%d: %s", fd, strerror(e));
 				}
-			} else
-				error("cannot create %s: %s", fname,
-				    strerror(EEXIST));
-			goto movefd;
-		}
-		/* FALLTHROUGH */
-	case NCLOBBER:
-		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_WRONLY|O_CREAT|O_TRUNC, 0666)) < 0)
-			error("cannot create %s: %s", fname, strerror(errno));
-		goto movefd;
-	case NAPPEND:
-		fname = redir->nfile.expfname;
-		if ((f = open(fname, O_WRONLY|O_CREAT|O_APPEND, 0666)) < 0)
-			error("cannot create %s: %s", fname, strerror(errno));
-		goto movefd;
-	case NTOFD:
-	case NFROMFD:
-		if (redir->ndup.dupfd >= 0) {	/* if not ">&-" */
-			if (memory[redir->ndup.dupfd])
-				memory[fd] = 1;
-			else {
-				if (dup2(redir->ndup.dupfd, fd) < 0)
-					error("%d: %s", redir->ndup.dupfd,
-							strerror(errno));
+				close(f);
 			}
-		} else {
-			close(fd);
-		}
-		break;
-	case NHERE:
-	case NXHERE:
-		f = openhere(redir);
-		goto movefd;
-	default:
-		abort();
+			break;
+		case NFROMTO:
+			fname = redir->nfile.expfname;
+			if ((f = open(fname, O_RDWR | O_CREAT, 0666)) < 0)
+				error("cannot create %s: %s", fname, strerror(errno));
+			goto movefd;
+		case NTO:
+			if (Cflag)
+			{
+				fname = redir->nfile.expfname;
+				if (stat(fname, &sb) == -1)
+				{
+					if ((f = open(fname, O_WRONLY | O_CREAT | O_EXCL, 0666)) < 0)
+						error("cannot create %s: %s", fname, strerror(errno));
+				}
+				else if (!S_ISREG(sb.st_mode))
+				{
+					if ((f = open(fname, O_WRONLY, 0666)) < 0)
+						error("cannot create %s: %s", fname, strerror(errno));
+					if (fstat(f, &sb) != -1 && S_ISREG(sb.st_mode))
+					{
+						close(f);
+						error("cannot create %s: %s", fname,
+							  strerror(EEXIST));
+					}
+				}
+				else
+					error("cannot create %s: %s", fname,
+						  strerror(EEXIST));
+				goto movefd;
+			}
+		/* FALLTHROUGH */
+		case NCLOBBER:
+			fname = redir->nfile.expfname;
+			if ((f = open(fname, O_WRONLY | O_CREAT | O_TRUNC, 0666)) < 0)
+				error("cannot create %s: %s", fname, strerror(errno));
+			goto movefd;
+		case NAPPEND:
+			fname = redir->nfile.expfname;
+			if ((f = open(fname, O_WRONLY | O_CREAT | O_APPEND, 0666)) < 0)
+				error("cannot create %s: %s", fname, strerror(errno));
+			goto movefd;
+		case NTOFD:
+		case NFROMFD:
+			if (redir->ndup.dupfd >= 0)  	/* if not ">&-" */
+			{
+				if (memory[redir->ndup.dupfd])
+					memory[fd] = 1;
+				else
+				{
+					if (dup2(redir->ndup.dupfd, fd) < 0)
+						error("%d: %s", redir->ndup.dupfd,
+							  strerror(errno));
+				}
+			}
+			else
+			{
+				close(fd);
+			}
+			break;
+		case NHERE:
+		case NXHERE:
+			f = openhere(redir);
+			goto movefd;
+		default:
+			abort();
 	}
 }
 
@@ -249,17 +265,15 @@ movefd:
  */
 
 static int
-openhere(union node *redir)
+openhere(union node* redir)
 {
-	const char *p;
+	const char* p;
 	int pip[2];
 	size_t len = 0;
 	int flags;
 	ssize_t written = 0;
-
 	if (pipe(pip) < 0)
 		error("Pipe call failed: %s", strerror(errno));
-
 	if (redir->type == NXHERE)
 		p = redir->nhere.expdoc;
 	else
@@ -268,7 +282,8 @@ openhere(union node *redir)
 	if (len == 0)
 		goto out;
 	flags = fcntl(pip[1], F_GETFL, 0);
-	if (flags != -1 && fcntl(pip[1], F_SETFL, flags | O_NONBLOCK) != -1) {
+	if (flags != -1 && fcntl(pip[1], F_SETFL, flags | O_NONBLOCK) != -1)
+	{
 		written = write(pip[1], p, len);
 		if (written < 0)
 			written = 0;
@@ -276,8 +291,8 @@ openhere(union node *redir)
 			goto out;
 		fcntl(pip[1], F_SETFL, flags);
 	}
-
-	if (forkshell((struct job *)NULL, (union node *)NULL, FORK_NOJOB) == 0) {
+	if (forkshell((struct job*)NULL, (union node*)NULL, FORK_NOJOB) == 0)
+	{
 		close(pip[0]);
 		signal(SIGINT, SIG_IGN);
 		signal(SIGQUIT, SIG_IGN);
@@ -301,15 +316,19 @@ out:
 void
 popredir(void)
 {
-	struct redirtab *rp = redirlist;
+	struct redirtab* rp = redirlist;
 	int i;
-
-	for (i = 0 ; i < 10 ; i++) {
-		if (rp->renamed[i] != EMPTY) {
-			if (rp->renamed[i] >= 0) {
+	for (i = 0 ; i < 10 ; i++)
+	{
+		if (rp->renamed[i] != EMPTY)
+		{
+			if (rp->renamed[i] >= 0)
+			{
 				dup2(rp->renamed[i], i);
 				close(rp->renamed[i]);
-			} else {
+			}
+			else
+			{
 				close(i);
 			}
 		}
@@ -325,7 +344,7 @@ popredir(void)
 int
 fd0_redirected_p(void)
 {
-        return fd0_redirected != 0;
+	return fd0_redirected != 0;
 }
 
 /*
@@ -335,12 +354,14 @@ fd0_redirected_p(void)
 void
 clearredir(void)
 {
-	struct redirtab *rp;
+	struct redirtab* rp;
 	int i;
-
-	for (rp = redirlist ; rp ; rp = rp->next) {
-		for (i = 0 ; i < 10 ; i++) {
-			if (rp->renamed[i] >= 0) {
+	for (rp = redirlist ; rp ; rp = rp->next)
+	{
+		for (i = 0 ; i < 10 ; i++)
+		{
+			if (rp->renamed[i] >= 0)
+			{
 				close(rp->renamed[i]);
 			}
 			rp->renamed[i] = EMPTY;

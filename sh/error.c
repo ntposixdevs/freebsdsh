@@ -60,14 +60,14 @@ __FBSDID("$FreeBSD: head/bin/sh/error.c 216622 2010-12-21 20:47:06Z jilles $");
  * Code to handle exceptions in C.
  */
 
-struct jmploc *handler;
+struct jmploc* handler;
 volatile sig_atomic_t exception;
 volatile sig_atomic_t suppressint;
 volatile sig_atomic_t intpending;
-char *commandname;
+char* commandname;
 
 
-static void exverror(int, const char *, va_list) __printf0like(2, 0) __dead2;
+static void exverror(int, const char*, va_list) __printf0like(2, 0) __dead2;
 
 /*
  * Called to raise an exception.  Since C doesn't include exceptions, we
@@ -103,21 +103,19 @@ void
 onint(void)
 {
 	sigset_t sigs;
-
 	/*
 	 * The !in_dotrap here is safe.  The only way we can arrive here
 	 * with in_dotrap set is that a trap handler set SIGINT to SIG_DFL
 	 * and killed itself.
 	 */
-
-	if (suppressint && !in_dotrap) {
+	if (suppressint && !in_dotrap)
+	{
 		intpending++;
 		return;
 	}
 	intpending = 0;
 	sigemptyset(&sigs);
 	sigprocmask(SIG_SETMASK, &sigs, NULL);
-
 	/*
 	 * This doesn't seem to be needed, since main() emits a newline.
 	 */
@@ -127,7 +125,8 @@ onint(void)
 #endif
 	if (rootshell && iflag)
 		exraise(EXINT);
-	else {
+	else
+	{
 		signal(SIGINT, SIG_DFL);
 		kill(getpid(), SIGINT);
 	}
@@ -135,7 +134,7 @@ onint(void)
 
 
 static void
-vwarning(const char *msg, va_list ap)
+vwarning(const char* msg, va_list ap)
 {
 	if (commandname)
 		outfmt(out2, "%s: ", commandname);
@@ -145,7 +144,7 @@ vwarning(const char *msg, va_list ap)
 
 
 void
-warning(const char *msg, ...)
+warning(const char* msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);
@@ -160,7 +159,7 @@ warning(const char *msg, ...)
  * formatting.  It then raises the error exception.
  */
 static void
-exverror(int cond, const char *msg, va_list ap)
+exverror(int cond, const char* msg, va_list ap)
 {
 	/*
 	 * An interrupt trumps an error.  Certain places catch error
@@ -171,7 +170,6 @@ exverror(int cond, const char *msg, va_list ap)
 	 * exraise() will disable interrupts for the exception handler.
 	 */
 	FORCEINTON;
-
 #ifdef DEBUG
 	if (msg)
 		TRACE(("exverror(%d, \"%s\") pid=%d\n", cond, msg, getpid()));
@@ -186,7 +184,7 @@ exverror(int cond, const char *msg, va_list ap)
 
 
 void
-error(const char *msg, ...)
+error(const char* msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);
@@ -196,7 +194,7 @@ error(const char *msg, ...)
 
 
 void
-exerror(int cond, const char *msg, ...)
+exerror(int cond, const char* msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);

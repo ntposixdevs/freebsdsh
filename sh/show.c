@@ -52,15 +52,15 @@ __FBSDID("$FreeBSD: head/bin/sh/show.c 258776 2013-11-30 21:27:11Z jilles $");
 
 
 #ifdef DEBUG
-static void shtree(union node *, int, char *, FILE*);
-static void shcmd(union node *, FILE *);
-static void sharg(union node *, FILE *);
-static void indent(int, char *, FILE *);
-static void trstring(char *);
+static void shtree(union node*, int, char*, FILE*);
+static void shcmd(union node*, FILE*);
+static void sharg(union node*, FILE*);
+static void indent(int, char*, FILE*);
+static void trstring(char*);
 
 
 void
-showtree(union node *n)
+showtree(union node* n)
 {
 	trputs("showtree called\n");
 	shtree(n, 1, NULL, stdout);
@@ -68,99 +68,138 @@ showtree(union node *n)
 
 
 static void
-shtree(union node *n, int ind, char *pfx, FILE *fp)
+shtree(union node* n, int ind, char* pfx, FILE* fp)
 {
-	struct nodelist *lp;
-	char *s;
-
+	struct nodelist* lp;
+	char* s;
 	if (n == NULL)
 		return;
-
 	indent(ind, pfx, fp);
-	switch(n->type) {
-	case NSEMI:
-		s = "; ";
-		goto binop;
-	case NAND:
-		s = " && ";
-		goto binop;
-	case NOR:
-		s = " || ";
+	switch (n->type)
+	{
+		case NSEMI:
+			s = "; ";
+			goto binop;
+		case NAND:
+			s = " && ";
+			goto binop;
+		case NOR:
+			s = " || ";
 binop:
-		shtree(n->nbinary.ch1, ind, NULL, fp);
-	   /*    if (ind < 0) */
+			shtree(n->nbinary.ch1, ind, NULL, fp);
+			/*    if (ind < 0) */
 			fputs(s, fp);
-		shtree(n->nbinary.ch2, ind, NULL, fp);
-		break;
-	case NCMD:
-		shcmd(n, fp);
-		if (ind >= 0)
-			putc('\n', fp);
-		break;
-	case NPIPE:
-		for (lp = n->npipe.cmdlist ; lp ; lp = lp->next) {
-			shcmd(lp->n, fp);
-			if (lp->next)
-				fputs(" | ", fp);
-		}
-		if (n->npipe.backgnd)
-			fputs(" &", fp);
-		if (ind >= 0)
-			putc('\n', fp);
-		break;
-	default:
-		fprintf(fp, "<node type %d>", n->type);
-		if (ind >= 0)
-			putc('\n', fp);
-		break;
+			shtree(n->nbinary.ch2, ind, NULL, fp);
+			break;
+		case NCMD:
+			shcmd(n, fp);
+			if (ind >= 0)
+				putc('\n', fp);
+			break;
+		case NPIPE:
+			for (lp = n->npipe.cmdlist ; lp ; lp = lp->next)
+			{
+				shcmd(lp->n, fp);
+				if (lp->next)
+					fputs(" | ", fp);
+			}
+			if (n->npipe.backgnd)
+				fputs(" &", fp);
+			if (ind >= 0)
+				putc('\n', fp);
+			break;
+		default:
+			fprintf(fp, "<node type %d>", n->type);
+			if (ind >= 0)
+				putc('\n', fp);
+			break;
 	}
 }
 
 
 
 static void
-shcmd(union node *cmd, FILE *fp)
+shcmd(union node* cmd, FILE* fp)
 {
-	union node *np;
+	union node* np;
 	int first;
-	char *s;
+	char* s;
 	int dftfd;
-
 	first = 1;
-	for (np = cmd->ncmd.args ; np ; np = np->narg.next) {
+	for (np = cmd->ncmd.args ; np ; np = np->narg.next)
+	{
 		if (! first)
 			putchar(' ');
 		sharg(np, fp);
 		first = 0;
 	}
-	for (np = cmd->ncmd.redirect ; np ; np = np->nfile.next) {
+	for (np = cmd->ncmd.redirect ; np ; np = np->nfile.next)
+	{
 		if (! first)
 			putchar(' ');
-		switch (np->nfile.type) {
-			case NTO:	s = ">";  dftfd = 1; break;
-			case NAPPEND:	s = ">>"; dftfd = 1; break;
-			case NTOFD:	s = ">&"; dftfd = 1; break;
-			case NCLOBBER:	s = ">|"; dftfd = 1; break;
-			case NFROM:	s = "<";  dftfd = 0; break;
-			case NFROMTO:	s = "<>"; dftfd = 0; break;
-			case NFROMFD:	s = "<&"; dftfd = 0; break;
-			case NHERE:	s = "<<"; dftfd = 0; break;
-			case NXHERE:	s = "<<"; dftfd = 0; break;
-			default:  	s = "*error*"; dftfd = 0; break;
+		switch (np->nfile.type)
+		{
+			case NTO:
+				s = ">";
+				dftfd = 1;
+				break;
+			case NAPPEND:
+				s = ">>";
+				dftfd = 1;
+				break;
+			case NTOFD:
+				s = ">&";
+				dftfd = 1;
+				break;
+			case NCLOBBER:
+				s = ">|";
+				dftfd = 1;
+				break;
+			case NFROM:
+				s = "<";
+				dftfd = 0;
+				break;
+			case NFROMTO:
+				s = "<>";
+				dftfd = 0;
+				break;
+			case NFROMFD:
+				s = "<&";
+				dftfd = 0;
+				break;
+			case NHERE:
+				s = "<<";
+				dftfd = 0;
+				break;
+			case NXHERE:
+				s = "<<";
+				dftfd = 0;
+				break;
+			default:
+				s = "*error*";
+				dftfd = 0;
+				break;
 		}
 		if (np->nfile.fd != dftfd)
 			fprintf(fp, "%d", np->nfile.fd);
 		fputs(s, fp);
-		if (np->nfile.type == NTOFD || np->nfile.type == NFROMFD) {
+		if (np->nfile.type == NTOFD || np->nfile.type == NFROMFD)
+		{
 			if (np->ndup.dupfd >= 0)
 				fprintf(fp, "%d", np->ndup.dupfd);
 			else
 				fprintf(fp, "-");
-		} else if (np->nfile.type == NHERE) {
-				fprintf(fp, "HERE");
-		} else if (np->nfile.type == NXHERE) {
-				fprintf(fp, "XHERE");
-		} else {
+		}
+		else if (np->nfile.type == NHERE)
+		{
+			fprintf(fp, "HERE");
+		}
+		else if (np->nfile.type == NXHERE)
+		{
+			fprintf(fp, "XHERE");
+		}
+		else
+		{
 			sharg(np->nfile.fname, fp);
 		}
 		first = 0;
@@ -170,96 +209,96 @@ shcmd(union node *cmd, FILE *fp)
 
 
 static void
-sharg(union node *arg, FILE *fp)
+sharg(union node* arg, FILE* fp)
 {
-	char *p;
-	struct nodelist *bqlist;
+	char* p;
+	struct nodelist* bqlist;
 	int subtype;
-
-	if (arg->type != NARG) {
+	if (arg->type != NARG)
+	{
 		printf("<node type %d>\n", arg->type);
 		fflush(stdout);
 		abort();
 	}
 	bqlist = arg->narg.backquote;
-	for (p = arg->narg.text ; *p ; p++) {
-		switch (*p) {
-		case CTLESC:
-			putc(*++p, fp);
-			break;
-		case CTLVAR:
-			putc('$', fp);
-			putc('{', fp);
-			subtype = *++p;
-			if (subtype == VSLENGTH)
-				putc('#', fp);
-
-			while (*p != '=')
-				putc(*p++, fp);
-
-			if (subtype & VSNUL)
-				putc(':', fp);
-
-			switch (subtype & VSTYPE) {
-			case VSNORMAL:
+	for (p = arg->narg.text ; *p ; p++)
+	{
+		switch (*p)
+		{
+			case CTLESC:
+				putc(*++p, fp);
+				break;
+			case CTLVAR:
+				putc('$', fp);
+				putc('{', fp);
+				subtype = *++p;
+				if (subtype == VSLENGTH)
+					putc('#', fp);
+				while (*p != '=')
+					putc(*p++, fp);
+				if (subtype & VSNUL)
+					putc(':', fp);
+				switch (subtype & VSTYPE)
+				{
+					case VSNORMAL:
+						putc('}', fp);
+						break;
+					case VSMINUS:
+						putc('-', fp);
+						break;
+					case VSPLUS:
+						putc('+', fp);
+						break;
+					case VSQUESTION:
+						putc('?', fp);
+						break;
+					case VSASSIGN:
+						putc('=', fp);
+						break;
+					case VSTRIMLEFT:
+						putc('#', fp);
+						break;
+					case VSTRIMLEFTMAX:
+						putc('#', fp);
+						putc('#', fp);
+						break;
+					case VSTRIMRIGHT:
+						putc('%', fp);
+						break;
+					case VSTRIMRIGHTMAX:
+						putc('%', fp);
+						putc('%', fp);
+						break;
+					case VSLENGTH:
+						break;
+					default:
+						printf("<subtype %d>", subtype);
+				}
+				break;
+			case CTLENDVAR:
 				putc('}', fp);
 				break;
-			case VSMINUS:
-				putc('-', fp);
-				break;
-			case VSPLUS:
-				putc('+', fp);
-				break;
-			case VSQUESTION:
-				putc('?', fp);
-				break;
-			case VSASSIGN:
-				putc('=', fp);
-				break;
-			case VSTRIMLEFT:
-				putc('#', fp);
-				break;
-			case VSTRIMLEFTMAX:
-				putc('#', fp);
-				putc('#', fp);
-				break;
-			case VSTRIMRIGHT:
-				putc('%', fp);
-				break;
-			case VSTRIMRIGHTMAX:
-				putc('%', fp);
-				putc('%', fp);
-				break;
-			case VSLENGTH:
+			case CTLBACKQ:
+			case CTLBACKQ|CTLQUOTE:
+				putc('$', fp);
+				putc('(', fp);
+				shtree(bqlist->n, -1, NULL, fp);
+				putc(')', fp);
 				break;
 			default:
-				printf("<subtype %d>", subtype);
-			}
-			break;
-		case CTLENDVAR:
-		     putc('}', fp);
-		     break;
-		case CTLBACKQ:
-		case CTLBACKQ|CTLQUOTE:
-			putc('$', fp);
-			putc('(', fp);
-			shtree(bqlist->n, -1, NULL, fp);
-			putc(')', fp);
-			break;
-		default:
-			putc(*p, fp);
-			break;
+				putc(*p, fp);
+				break;
 		}
 	}
 }
 
 
 static void
-indent(int amount, char *pfx, FILE *fp)
+indent(int amount, char* pfx, FILE* fp)
 {
 	int i;
-
-	for (i = 0 ; i < amount ; i++) {
+	for (i = 0 ; i < amount ; i++)
+	{
 		if (pfx && i == amount - 1)
 			fputs(pfx, fp);
 		putc('\t', fp);
@@ -272,7 +311,7 @@ indent(int amount, char *pfx, FILE *fp)
  */
 
 
-FILE *tracefile;
+FILE* tracefile;
 
 #if DEBUG >= 2
 int debug = 1;
@@ -293,11 +332,12 @@ trputc(int c)
 
 
 void
-sh_trace(const char *fmt, ...)
+sh_trace(const char* fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
-	if (tracefile != NULL) {
+	if (tracefile != NULL)
+	{
 		(void) vfprintf(tracefile, fmt, va);
 		if (strchr(fmt, '\n'))
 			(void) fflush(tracefile);
@@ -307,7 +347,7 @@ sh_trace(const char *fmt, ...)
 
 
 void
-trputs(const char *s)
+trputs(const char* s)
 {
 	if (tracefile == NULL)
 		return;
@@ -318,39 +358,62 @@ trputs(const char *s)
 
 
 static void
-trstring(char *s)
+trstring(char* s)
 {
-	char *p;
+	char* p;
 	char c;
-
 	if (tracefile == NULL)
 		return;
 	putc('"', tracefile);
-	for (p = s ; *p ; p++) {
-		switch (*p) {
-		case '\n':  c = 'n';  goto backslash;
-		case '\t':  c = 't';  goto backslash;
-		case '\r':  c = 'r';  goto backslash;
-		case '"':  c = '"';  goto backslash;
-		case '\\':  c = '\\';  goto backslash;
-		case CTLESC:  c = 'e';  goto backslash;
-		case CTLVAR:  c = 'v';  goto backslash;
-		case CTLVAR+CTLQUOTE:  c = 'V';  goto backslash;
-		case CTLBACKQ:  c = 'q';  goto backslash;
-		case CTLBACKQ+CTLQUOTE:  c = 'Q';  goto backslash;
-backslash:	  putc('\\', tracefile);
-			putc(c, tracefile);
-			break;
-		default:
-			if (*p >= ' ' && *p <= '~')
-				putc(*p, tracefile);
-			else {
+	for (p = s ; *p ; p++)
+	{
+		switch (*p)
+		{
+			case '\n':
+				c = 'n';
+				goto backslash;
+			case '\t':
+				c = 't';
+				goto backslash;
+			case '\r':
+				c = 'r';
+				goto backslash;
+			case '"':
+				c = '"';
+				goto backslash;
+			case '\\':
+				c = '\\';
+				goto backslash;
+			case CTLESC:
+				c = 'e';
+				goto backslash;
+			case CTLVAR:
+				c = 'v';
+				goto backslash;
+			case CTLVAR+CTLQUOTE:
+				c = 'V';
+				goto backslash;
+			case CTLBACKQ:
+				c = 'q';
+				goto backslash;
+			case CTLBACKQ+CTLQUOTE:
+				c = 'Q';
+				goto backslash;
+backslash:
 				putc('\\', tracefile);
-				putc(*p >> 6 & 03, tracefile);
-				putc(*p >> 3 & 07, tracefile);
-				putc(*p & 07, tracefile);
-			}
-			break;
+				putc(c, tracefile);
+				break;
+			default:
+				if (*p >= ' ' && *p <= '~')
+					putc(*p, tracefile);
+				else
+				{
+					putc('\\', tracefile);
+					putc(*p >> 6 & 03, tracefile);
+					putc(*p >> 3 & 07, tracefile);
+					putc(*p & 07, tracefile);
+				}
+				break;
 		}
 	}
 	putc('"', tracefile);
@@ -358,11 +421,12 @@ backslash:	  putc('\\', tracefile);
 
 
 void
-trargs(char **ap)
+trargs(char** ap)
 {
 	if (tracefile == NULL)
 		return;
-	while (*ap) {
+	while (*ap)
+	{
 		trstring(*ap++);
 		if (*ap)
 			putc(' ', tracefile);
@@ -378,13 +442,13 @@ opentrace(void)
 {
 	char s[100];
 	int flags;
-
 	if (!debug)
 		return;
 #ifdef not_this_way
 	{
-		char *p;
-		if ((p = getenv("HOME")) == NULL) {
+		char* p;
+		if ((p = getenv("HOME")) == NULL)
+		{
 			if (geteuid() == 0)
 				p = "/";
 			else
@@ -396,7 +460,8 @@ opentrace(void)
 #else
 	strcpy(s, "./trace");
 #endif /* not_this_way */
-	if ((tracefile = fopen(s, "a")) == NULL) {
+	if ((tracefile = fopen(s, "a")) == NULL)
+	{
 		fprintf(stderr, "Can't open %s: %s\n", s, strerror(errno));
 		return;
 	}

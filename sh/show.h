@@ -30,11 +30,11 @@
  * $FreeBSD: head/bin/sh/show.h 200956 2009-12-24 18:41:14Z jilles $
  */
 
-void showtree(union node *);
+void showtree(union node*);
 #ifdef DEBUG
-void sh_trace(const char *, ...) __printflike(1, 2);
-void trargs(char **);
+void sh_trace(const char*, ...) __printflike(1, 2);
+void trargs(char**);
 void trputc(int);
-void trputs(const char *);
+void trputs(const char*);
 void opentrace(void);
 #endif

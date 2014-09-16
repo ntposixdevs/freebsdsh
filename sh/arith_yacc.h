@@ -81,9 +81,10 @@
 #define ARITH_QMARK 37
 #define ARITH_COLON 38
 
-union yystype {
+union yystype
+{
 	arith_t val;
-	char *name;
+	char* name;
 };
 
 extern union yystype yylval;

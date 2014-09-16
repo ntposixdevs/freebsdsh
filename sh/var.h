@@ -49,26 +49,28 @@
 #define VNOLOCAL	0x100	/* ignore forcelocal */
 
 
-struct var {
-	struct var *next;		/* next entry in hash list */
+struct var
+{
+	struct var* next;		/* next entry in hash list */
 	int flags;			/* flags are defined above */
 	int name_len;			/* length of name */
-	char *text;			/* name=value */
-	void (*func)(const char *);
-					/* function to be called when  */
-					/* the variable gets set/unset */
+	char* text;			/* name=value */
+	void (*func)(const char*);
+	/* function to be called when  */
+	/* the variable gets set/unset */
 };
 
 
-struct localvar {
-	struct localvar *next;		/* next local variable in list */
-	struct var *vp;			/* the variable that was made local */
+struct localvar
+{
+	struct localvar* next;		/* next local variable in list */
+	struct var* vp;			/* the variable that was made local */
 	int flags;			/* saved flags */
-	char *text;			/* saved text */
+	char* text;			/* saved text */
 };
 
 
-struct localvar *localvars;
+struct localvar* localvars;
 extern int forcelocal;
 
 extern struct var vifs;
@@ -112,19 +114,19 @@ extern int initial_localeisutf8;
 #define disvforkset()	((vdisvfork.flags & VUNSET) == 0)
 
 void initvar(void);
-void setvar(const char *, const char *, int);
-void setvareq(char *, int);
+void setvar(const char*, const char*, int);
+void setvareq(char*, int);
 struct strlist;
-void listsetvar(struct strlist *, int);
-char *lookupvar(const char *);
-char *bltinlookup(const char *, int);
+void listsetvar(struct strlist*, int);
+char* lookupvar(const char*);
+char* bltinlookup(const char*, int);
 void bltinsetlocale(void);
 void bltinunsetlocale(void);
 void updatecharset(void);
 void initcharset(void);
-char **environment(void);
-int showvarscmd(int, char **);
-void mklocal(char *);
+char** environment(void);
+int showvarscmd(int, char**);
+void mklocal(char*);
 void poplocalvars(void);
-int unsetvar(const char *);
-int setvarsafe(const char *, const char *, int);
+int unsetvar(const char*);
+int setvarsafe(const char*, const char*, int);

@@ -47,10 +47,11 @@
  * array of pids.
  */
 
-struct procstat {
+struct procstat
+{
 	pid_t pid;		/* process id */
 	int status;		/* status flags (defined above) */
-	char *cmd;		/* text of command being run */
+	char* cmd;		/* text of command being run */
 };
 
 
@@ -59,9 +60,10 @@ struct procstat {
 #define JOBDONE 2		/* all procs are completed */
 
 
-struct job {
+struct job
+{
 	struct procstat ps0;	/* status of process */
-	struct procstat *ps;	/* status or processes when more than one */
+	struct procstat* ps;	/* status or processes when more than one */
 	short nprocs;		/* number of processes */
 	pid_t pgrp;		/* process group of this job */
 	char state;		/* true if job is finished */
@@ -71,11 +73,12 @@ struct job {
 	char remembered;	/* true if $! referenced */
 #if JOBS
 	char jobctl;		/* job running under job control */
-	struct job *next;	/* job used after this one */
+	struct job* next;	/* job used after this one */
 #endif
 };
 
-enum {
+enum
+{
 	SHOWJOBS_DEFAULT,	/* job number, status, command */
 	SHOWJOBS_VERBOSE,	/* job number, PID, status, command */
 	SHOWJOBS_PIDS,		/* PID only */
@@ -86,14 +89,14 @@ extern int job_warning;		/* user was warned about stopped jobs */
 
 void setjobctl(int);
 void showjobs(int, int);
-struct job *makejob(union node *, int);
-pid_t forkshell(struct job *, union node *, int);
-pid_t vforkexecshell(struct job *, char **, char **, const char *, int, int []);
-int waitforjob(struct job *, int *);
+struct job* makejob(union node*, int);
+pid_t forkshell(struct job*, union node*, int);
+pid_t vforkexecshell(struct job*, char**, char**, const char*, int, int []);
+int waitforjob(struct job*, int*);
 int stoppedjobs(void);
 int backgndpidset(void);
 pid_t backgndpidval(void);
-char *commandtext(union node *);
+char* commandtext(union node*);
 
 #if ! JOBS
 #define setjobctl(on)	/* do nothing */

@@ -66,7 +66,7 @@ char nullstr[1];		/* zero length string */
  */
 
 int
-number(const char *s)
+number(const char* s)
 {
 	if (! is_number(s))
 		error("Illegal number: %s", s);
@@ -80,10 +80,9 @@ number(const char *s)
  */
 
 int
-is_number(const char *p)
+is_number(const char* p)
 {
-	const char *q;
-
+	const char* q;
 	if (*p == '\0')
 		return 0;
 	while (*p == '0')
@@ -92,7 +91,7 @@ is_number(const char *p)
 		if (! is_digit(*q))
 			return 0;
 	if (q - p > 10 ||
-	    (q - p == 10 && memcmp(p, "2147483647", 10) > 0))
+			(q - p == 10 && memcmp(p, "2147483647", 10) > 0))
 		return 0;
 	return 1;
 }

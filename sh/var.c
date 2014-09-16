@@ -72,11 +72,12 @@ __FBSDID("$FreeBSD: head/bin/sh/var.c 263847 2014-03-27 22:57:23Z jilles $");
 #define VTABSIZE 39
 
 
-struct varinit {
-	struct var *var;
+struct varinit
+{
+	struct var* var;
 	int flags;
-	const char *text;
-	void (*func)(const char *);
+	const char* text;
+	void (*func)(const char*);
 };
 
 
@@ -96,53 +97,78 @@ struct var vdisvfork;
 
 int forcelocal;
 
-static const struct varinit varinit[] = {
+static const struct varinit varinit[] =
+{
 #ifndef NO_HISTORY
-	{ &vhistsize,	VUNSET,				"HISTSIZE=",
-	  sethistsize },
+	{
+		&vhistsize,	VUNSET,				"HISTSIZE=",
+		sethistsize
+	},
 #endif
-	{ &vifs,	0,				"IFS= \t\n",
-	  NULL },
-	{ &vmail,	VUNSET,				"MAIL=",
-	  NULL },
-	{ &vmpath,	VUNSET,				"MAILPATH=",
-	  NULL },
-	{ &vpath,	0,				"PATH=" _PATH_DEFPATH,
-	  changepath },
+	{
+		&vifs,	0,				"IFS= \t\n",
+		NULL
+	},
+	{
+		&vmail,	VUNSET,				"MAIL=",
+		NULL
+	},
+	{
+		&vmpath,	VUNSET,				"MAILPATH=",
+		NULL
+	},
+	{
+		&vpath,	0,				"PATH=" _PATH_DEFPATH,
+		changepath
+	},
 	/*
 	 * vps1 depends on uid
 	 */
-	{ &vps2,	0,				"PS2=> ",
-	  NULL },
-	{ &vps4,	0,				"PS4=+ ",
-	  NULL },
+	{
+		&vps2,	0,				"PS2=> ",
+		NULL
+	},
+	{
+		&vps4,	0,				"PS4=+ ",
+		NULL
+	},
 #ifndef NO_HISTORY
-	{ &vterm,	VUNSET,				"TERM=",
-	  setterm },
+	{
+		&vterm,	VUNSET,				"TERM=",
+		setterm
+	},
 #endif
-	{ &voptind,	0,				"OPTIND=1",
-	  getoptsreset },
-	{ &vdisvfork,	VUNSET,				"SH_DISABLE_VFORK=",
-	  NULL },
-	{ NULL,	0,				NULL,
-	  NULL }
+	{
+		&voptind,	0,				"OPTIND=1",
+		getoptsreset
+	},
+	{
+		&vdisvfork,	VUNSET,				"SH_DISABLE_VFORK=",
+		NULL
+	},
+	{
+		NULL,	0,				NULL,
+		NULL
+	}
 };
 
-static struct var *vartab[VTABSIZE];
+static struct var* vartab[VTABSIZE];
 
-static const char *const locale_names[7] = {
+static const char* const locale_names[7] =
+{
 	"LC_COLLATE", "LC_CTYPE", "LC_MONETARY",
 	"LC_NUMERIC", "LC_TIME", "LC_MESSAGES", NULL
 };
-static const int locale_categories[7] = {
+static const int locale_categories[7] =
+{
 	LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, LC_TIME, LC_MESSAGES, 0
 };
 
-static int varequal(const char *, const char *);
-static struct var *find_var(const char *, struct var ***, int *);
-static int localevar(const char *);
+static int varequal(const char*, const char*);
+static struct var* find_var(const char*, struct var***, int*);
+static int localevar(const char*);
 
-extern char **environ;
+extern char** environ;
 
 /*
  * This routine initializes the builtin variables and imports the environment.
@@ -153,34 +179,37 @@ void
 initvar(void)
 {
 	char ppid[20];
-	const struct varinit *ip;
-	struct var *vp;
-	struct var **vpp;
-	char **envp;
-
-	for (ip = varinit ; (vp = ip->var) != NULL ; ip++) {
+	const struct varinit* ip;
+	struct var* vp;
+	struct var** vpp;
+	char** envp;
+	for (ip = varinit ; (vp = ip->var) != NULL ; ip++)
+	{
 		if (find_var(ip->text, &vpp, &vp->name_len) != NULL)
 			continue;
 		vp->next = *vpp;
 		*vpp = vp;
-		vp->text = __DECONST(char *, ip->text);
+		vp->text = __DECONST(char*, ip->text);
 		vp->flags = ip->flags | VSTRFIXED | VTEXTFIXED;
 		vp->func = ip->func;
 	}
 	/*
 	 * PS1 depends on uid
 	 */
-	if (find_var("PS1", &vpp, &vps1.name_len) == NULL) {
+	if (find_var("PS1", &vpp, &vps1.name_len) == NULL)
+	{
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.text = __DECONST(char *, geteuid() ? "PS1=$ " : "PS1=# ");
-		vps1.flags = VSTRFIXED|VTEXTFIXED;
+		vps1.text = __DECONST(char*, geteuid() ? "PS1=$ " : "PS1=# ");
+		vps1.flags = VSTRFIXED | VTEXTFIXED;
 	}
 	fmtstr(ppid, sizeof(ppid), "%d", (int)getppid());
 	setvarsafe("PPID", ppid, 0);
-	for (envp = environ ; *envp ; envp++) {
-		if (strchr(*envp, '=')) {
-			setvareq(*envp, VEXPORT|VTEXTFIXED);
+	for (envp = environ ; *envp ; envp++)
+	{
+		if (strchr(*envp, '='))
+		{
+			setvareq(*envp, VEXPORT | VTEXTFIXED);
 		}
 	}
 	setvareq("OPTIND=1", VTEXTFIXED);
@@ -191,17 +220,17 @@ initvar(void)
  */
 
 int
-setvarsafe(const char *name, const char *val, int flags)
+setvarsafe(const char* name, const char* val, int flags)
 {
 	struct jmploc jmploc;
-	struct jmploc *const savehandler = handler;
+	struct jmploc* const savehandler = handler;
 	int err = 0;
 	int inton;
-
 	inton = is_int_on();
 	if (setjmp(jmploc.loc))
 		err = 1;
-	else {
+	else
+	{
 		handler = &jmploc;
 		setvar(name, val, flags);
 	}
@@ -216,22 +245,23 @@ setvarsafe(const char *name, const char *val, int flags)
  */
 
 void
-setvar(const char *name, const char *val, int flags)
+setvar(const char* name, const char* val, int flags)
 {
-	const char *p;
+	const char* p;
 	size_t len;
 	size_t namelen;
 	size_t vallen;
-	char *nameeq;
+	char* nameeq;
 	int isbad;
-
 	isbad = 0;
 	p = name;
 	if (! is_name(*p))
 		isbad = 1;
 	p++;
-	for (;;) {
-		if (! is_in_name(*p)) {
+	for (;;)
+	{
+		if (! is_in_name(*p))
+		{
 			if (*p == '\0' || *p == '=')
 				break;
 			isbad = 1;
@@ -242,10 +272,13 @@ setvar(const char *name, const char *val, int flags)
 	if (isbad)
 		error("%.*s: bad variable name", (int)namelen, name);
 	len = namelen + 2;		/* 2 is space for '=' and '\0' */
-	if (val == NULL) {
+	if (val == NULL)
+	{
 		flags |= VUNSET;
 		vallen = 0;
-	} else {
+	}
+	else
+	{
 		vallen = strlen(val);
 		len += vallen;
 	}
@@ -262,10 +295,9 @@ setvar(const char *name, const char *val, int flags)
 }
 
 static int
-localevar(const char *s)
+localevar(const char* s)
 {
-	const char *const *ss;
-
+	const char* const* ss;
 	if (*s != 'L')
 		return 0;
 	if (varequal(s + 1, "ANG"))
@@ -286,22 +318,20 @@ localevar(const char *s)
  * pointer into environ where the string should not be manipulated.
  */
 static void
-change_env(const char *s, int set)
+change_env(const char* s, int set)
 {
-	char *eqp;
-	char *ss;
-
+	char* eqp;
+	char* ss;
 	INTOFF;
 	ss = savestr(s);
 	if ((eqp = strchr(ss, '=')) != NULL)
-		*eqp = '\0';
+		* eqp = '\0';
 	if (set && eqp != NULL)
 		(void) setenv(ss, eqp + 1, 1);
 	else
 		(void) unsetenv(ss);
 	ckfree(ss);
 	INTON;
-
 	return;
 }
 
@@ -314,39 +344,37 @@ change_env(const char *s, int set)
  */
 
 void
-setvareq(char *s, int flags)
+setvareq(char* s, int flags)
 {
-	struct var *vp, **vpp;
+	struct var* vp, **vpp;
 	int nlen;
-
 	if (aflag)
 		flags |= VEXPORT;
 	if (forcelocal && !(flags & (VNOSET | VNOLOCAL)))
 		mklocal(s);
 	vp = find_var(s, &vpp, &nlen);
-	if (vp != NULL) {
-		if (vp->flags & VREADONLY) {
-			if ((flags & (VTEXTFIXED|VSTACK)) == 0)
+	if (vp != NULL)
+	{
+		if (vp->flags & VREADONLY)
+		{
+			if ((flags & (VTEXTFIXED | VSTACK)) == 0)
 				ckfree(s);
 			error("%.*s: is read only", vp->name_len, s);
 		}
-		if (flags & VNOSET) {
-			if ((flags & (VTEXTFIXED|VSTACK)) == 0)
+		if (flags & VNOSET)
+		{
+			if ((flags & (VTEXTFIXED | VSTACK)) == 0)
 				ckfree(s);
 			return;
 		}
 		INTOFF;
-
 		if (vp->func && (flags & VNOFUNC) == 0)
 			(*vp->func)(s + vp->name_len + 1);
-
-		if ((vp->flags & (VTEXTFIXED|VSTACK)) == 0)
+		if ((vp->flags & (VTEXTFIXED | VSTACK)) == 0)
 			ckfree(vp->text);
-
-		vp->flags &= ~(VTEXTFIXED|VSTACK|VUNSET);
+		vp->flags &= ~(VTEXTFIXED | VSTACK | VUNSET);
 		vp->flags |= flags;
 		vp->text = s;
-
 		/*
 		 * We could roll this to a function, to handle it as
 		 * a regular variable function callback, but why bother?
@@ -356,9 +384,10 @@ setvareq(char *s, int flags)
 		 * are looked at.
 		 */
 		if ((vp == &vmpath || (vp == &vmail && ! mpathset())) &&
-		    iflag == 1)
+				iflag == 1)
 			chkmail(1);
-		if ((vp->flags & VEXPORT) && localevar(s)) {
+		if ((vp->flags & VEXPORT) && localevar(s))
+		{
 			change_env(s, 1);
 			(void) setlocale(LC_ALL, "");
 			updatecharset();
@@ -367,20 +396,22 @@ setvareq(char *s, int flags)
 		return;
 	}
 	/* not found */
-	if (flags & VNOSET) {
-		if ((flags & (VTEXTFIXED|VSTACK)) == 0)
+	if (flags & VNOSET)
+	{
+		if ((flags & (VTEXTFIXED | VSTACK)) == 0)
 			ckfree(s);
 		return;
 	}
 	INTOFF;
-	vp = ckmalloc(sizeof (*vp));
+	vp = ckmalloc(sizeof(*vp));
 	vp->flags = flags;
 	vp->text = s;
 	vp->name_len = nlen;
 	vp->next = *vpp;
 	vp->func = NULL;
 	*vpp = vp;
-	if ((vp->flags & VEXPORT) && localevar(s)) {
+	if ((vp->flags & VEXPORT) && localevar(s))
+	{
 		change_env(s, 1);
 		(void) setlocale(LC_ALL, "");
 		updatecharset();
@@ -395,12 +426,12 @@ setvareq(char *s, int flags)
  */
 
 void
-listsetvar(struct strlist *list, int flags)
+listsetvar(struct strlist* list, int flags)
 {
-	struct strlist *lp;
-
+	struct strlist* lp;
 	INTOFF;
-	for (lp = list ; lp ; lp = lp->next) {
+	for (lp = list ; lp ; lp = lp->next)
+	{
 		setvareq(savestr(lp->text), flags);
 	}
 	INTON;
@@ -412,11 +443,10 @@ listsetvar(struct strlist *list, int flags)
  * Find the value of a variable.  Returns NULL if not set.
  */
 
-char *
-lookupvar(const char *name)
+char*
+lookupvar(const char* name)
 {
-	struct var *v;
-
+	struct var* v;
 	v = find_var(name, NULL, NULL);
 	if (v == NULL || v->flags & VUNSET)
 		return NULL;
@@ -431,24 +461,23 @@ lookupvar(const char *name)
  * exported.
  */
 
-char *
-bltinlookup(const char *name, int doall)
+char*
+bltinlookup(const char* name, int doall)
 {
-	struct strlist *sp;
-	struct var *v;
-	char *result;
-
+	struct strlist* sp;
+	struct var* v;
+	char* result;
 	result = NULL;
-	for (sp = cmdenviron ; sp ; sp = sp->next) {
+	for (sp = cmdenviron ; sp ; sp = sp->next)
+	{
 		if (varequal(sp->text, name))
 			result = strchr(sp->text, '=') + 1;
 	}
 	if (result != NULL)
 		return result;
-
 	v = find_var(name, NULL, NULL);
 	if (v == NULL || v->flags & VUNSET ||
-	    (!doall && (v->flags & VEXPORT) == 0))
+			(!doall && (v->flags & VEXPORT) == 0))
 		return NULL;
 	return v->text + v->name_len + 1;
 }
@@ -460,13 +489,14 @@ bltinlookup(const char *name, int doall)
 void
 bltinsetlocale(void)
 {
-	struct strlist *lp;
+	struct strlist* lp;
 	int act = 0;
-	char *loc, *locdef;
+	char* loc, *locdef;
 	int i;
-
-	for (lp = cmdenviron ; lp ; lp = lp->next) {
-		if (localevar(lp->text)) {
+	for (lp = cmdenviron ; lp ; lp = lp->next)
+	{
+		if (localevar(lp->text))
+		{
 			act = 1;
 			break;
 		}
@@ -475,14 +505,16 @@ bltinsetlocale(void)
 		return;
 	loc = bltinlookup("LC_ALL", 0);
 	INTOFF;
-	if (loc != NULL) {
+	if (loc != NULL)
+	{
 		setlocale(LC_ALL, loc);
 		INTON;
 		updatecharset();
 		return;
 	}
 	locdef = bltinlookup("LANG", 0);
-	for (i = 0; locale_names[i] != NULL; i++) {
+	for (i = 0; locale_names[i] != NULL; i++)
+	{
 		loc = bltinlookup(locale_names[i], 0);
 		if (loc == NULL)
 			loc = locdef;
@@ -499,11 +531,12 @@ bltinsetlocale(void)
 void
 bltinunsetlocale(void)
 {
-	struct strlist *lp;
-
+	struct strlist* lp;
 	INTOFF;
-	for (lp = cmdenviron ; lp ; lp = lp->next) {
-		if (localevar(lp->text)) {
+	for (lp = cmdenviron ; lp ; lp = lp->next)
+	{
+		if (localevar(lp->text))
+		{
 			setlocale(LC_ALL, "");
 			updatecharset();
 			return;
@@ -518,8 +551,7 @@ bltinunsetlocale(void)
 void
 updatecharset(void)
 {
-	char *charset;
-
+	char* charset;
 	charset = nl_langinfo(CODESET);
 	localeisutf8 = !strcmp(charset, "UTF-8");
 }
@@ -536,25 +568,26 @@ initcharset(void)
  * the third argument to execve when executing a program.
  */
 
-char **
+char**
 environment(void)
 {
 	int nenv;
-	struct var **vpp;
-	struct var *vp;
-	char **env, **ep;
-
+	struct var** vpp;
+	struct var* vp;
+	char** env, **ep;
 	nenv = 0;
-	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
+	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++)
+	{
 		for (vp = *vpp ; vp ; vp = vp->next)
 			if (vp->flags & VEXPORT)
 				nenv++;
 	}
-	ep = env = stalloc((nenv + 1) * sizeof *env);
-	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
+	ep = env = stalloc((nenv + 1) * sizeof * env);
+	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++)
+	{
 		for (vp = *vpp ; vp ; vp = vp->next)
 			if (vp->flags & VEXPORT)
-				*ep++ = vp->text;
+				* ep++ = vp->text;
 	}
 	*ep = NULL;
 	return env;
@@ -562,10 +595,9 @@ environment(void)
 
 
 static int
-var_compare(const void *a, const void *b)
+var_compare(const void* a, const void* b)
 {
-	const char *const *sa, *const *sb;
-
+	const char* const* sa, *const* sb;
 	sa = a;
 	sb = b;
 	/*
@@ -583,37 +615,39 @@ var_compare(const void *a, const void *b)
  */
 
 int
-showvarscmd(int argc __unused, char **argv __unused)
+showvarscmd(int argc __unused, char** argv __unused)
 {
-	struct var **vpp;
-	struct var *vp;
-	const char *s;
-	const char **vars;
+	struct var** vpp;
+	struct var* vp;
+	const char* s;
+	const char** vars;
 	int i, n;
-
 	/*
 	 * POSIX requires us to sort the variables.
 	 */
 	n = 0;
-	for (vpp = vartab; vpp < vartab + VTABSIZE; vpp++) {
-		for (vp = *vpp; vp; vp = vp->next) {
+	for (vpp = vartab; vpp < vartab + VTABSIZE; vpp++)
+	{
+		for (vp = *vpp; vp; vp = vp->next)
+		{
 			if (!(vp->flags & VUNSET))
 				n++;
 		}
 	}
-
 	INTOFF;
 	vars = ckmalloc(n * sizeof(*vars));
 	i = 0;
-	for (vpp = vartab; vpp < vartab + VTABSIZE; vpp++) {
-		for (vp = *vpp; vp; vp = vp->next) {
+	for (vpp = vartab; vpp < vartab + VTABSIZE; vpp++)
+	{
+		for (vp = *vpp; vp; vp = vp->next)
+		{
 			if (!(vp->flags & VUNSET))
 				vars[i++] = vp->text;
 		}
 	}
-
 	qsort(vars, n, sizeof(*vars), var_compare);
-	for (i = 0; i < n; i++) {
+	for (i = 0; i < n; i++)
+	{
 		/*
 		 * Skip improper variable names so the output remains usable as
 		 * shell input.
@@ -628,7 +662,6 @@ showvarscmd(int argc __unused, char **argv __unused)
 	}
 	ckfree(vars);
 	INTON;
-
 	return 0;
 }
 
@@ -639,38 +672,45 @@ showvarscmd(int argc __unused, char **argv __unused)
  */
 
 int
-exportcmd(int argc __unused, char **argv)
+exportcmd(int argc __unused, char** argv)
 {
-	struct var **vpp;
-	struct var *vp;
-	char **ap;
-	char *name;
-	char *p;
-	char *cmdname;
+	struct var** vpp;
+	struct var* vp;
+	char** ap;
+	char* name;
+	char* p;
+	char* cmdname;
 	int ch, values;
-	int flag = argv[0][0] == 'r'? VREADONLY : VEXPORT;
-
+	int flag = argv[0][0] == 'r' ? VREADONLY : VEXPORT;
 	cmdname = argv[0];
 	values = 0;
-	while ((ch = nextopt("p")) != '\0') {
-		switch (ch) {
-		case 'p':
-			values = 1;
-			break;
+	while ((ch = nextopt("p")) != '\0')
+	{
+		switch (ch)
+		{
+			case 'p':
+				values = 1;
+				break;
 		}
 	}
-
 	if (values && *argptr != NULL)
 		error("-p requires no arguments");
-	if (*argptr != NULL) {
-		for (ap = argptr; (name = *ap) != NULL; ap++) {
-			if ((p = strchr(name, '=')) != NULL) {
+	if (*argptr != NULL)
+	{
+		for (ap = argptr; (name = *ap) != NULL; ap++)
+		{
+			if ((p = strchr(name, '=')) != NULL)
+			{
 				p++;
-			} else {
+			}
+			else
+			{
 				vp = find_var(name, NULL, NULL);
-				if (vp != NULL) {
+				if (vp != NULL)
+				{
 					vp->flags |= flag;
-					if ((vp->flags & VEXPORT) && localevar(vp->text)) {
+					if ((vp->flags & VEXPORT) && localevar(vp->text))
+					{
 						change_env(vp->text, 1);
 						(void) setlocale(LC_ALL, "");
 						updatecharset();
@@ -680,11 +720,17 @@ exportcmd(int argc __unused, char **argv)
 			}
 			setvar(name, p, flag);
 		}
-	} else {
-		for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++) {
-			for (vp = *vpp ; vp ; vp = vp->next) {
-				if (vp->flags & flag) {
-					if (values) {
+	}
+	else
+	{
+		for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++)
+		{
+			for (vp = *vpp ; vp ; vp = vp->next)
+			{
+				if (vp->flags & flag)
+				{
+					if (values)
+					{
 						/*
 						 * Skip improper variable names
 						 * so the output remains usable
@@ -695,14 +741,16 @@ exportcmd(int argc __unused, char **argv)
 						out1str(cmdname);
 						out1c(' ');
 					}
-					if (values && !(vp->flags & VUNSET)) {
+					if (values && !(vp->flags & VUNSET))
+					{
 						outbin(vp->text,
-						    vp->name_len + 1, out1);
+							   vp->name_len + 1, out1);
 						out1qstr(vp->text +
-						    vp->name_len + 1);
-					} else
+								 vp->name_len + 1);
+					}
+					else
 						outbin(vp->text, vp->name_len,
-						    out1);
+							   out1);
 					out1c('\n');
 				}
 			}
@@ -717,14 +765,14 @@ exportcmd(int argc __unused, char **argv)
  */
 
 int
-localcmd(int argc __unused, char **argv __unused)
+localcmd(int argc __unused, char** argv __unused)
 {
-	char *name;
-
+	char* name;
 	nextopt("");
 	if (! in_function())
 		error("Not in a function");
-	while ((name = *argptr++) != NULL) {
+	while ((name = *argptr++) != NULL)
+	{
 		mklocal(name);
 	}
 	return 0;
@@ -739,21 +787,24 @@ localcmd(int argc __unused, char **argv __unused)
  */
 
 void
-mklocal(char *name)
+mklocal(char* name)
 {
-	struct localvar *lvp;
-	struct var **vpp;
-	struct var *vp;
-
+	struct localvar* lvp;
+	struct var** vpp;
+	struct var* vp;
 	INTOFF;
-	lvp = ckmalloc(sizeof (struct localvar));
-	if (name[0] == '-' && name[1] == '\0') {
+	lvp = ckmalloc(sizeof(struct localvar));
+	if (name[0] == '-' && name[1] == '\0')
+	{
 		lvp->text = ckmalloc(sizeof optlist);
 		memcpy(lvp->text, optlist, sizeof optlist);
 		vp = NULL;
-	} else {
+	}
+	else
+	{
 		vp = find_var(name, &vpp, NULL);
-		if (vp == NULL) {
+		if (vp == NULL)
+		{
 			if (strchr(name, '='))
 				setvareq(savestr(name), VSTRFIXED | VNOLOCAL);
 			else
@@ -761,10 +812,12 @@ mklocal(char *name)
 			vp = *vpp;	/* the new variable */
 			lvp->text = NULL;
 			lvp->flags = VUNSET;
-		} else {
+		}
+		else
+		{
 			lvp->text = vp->text;
 			lvp->flags = vp->flags;
-			vp->flags |= VSTRFIXED|VTEXTFIXED;
+			vp->flags |= VSTRFIXED | VTEXTFIXED;
 			if (name[vp->name_len] == '=')
 				setvareq(savestr(name), VNOLOCAL);
 		}
@@ -783,20 +836,25 @@ mklocal(char *name)
 void
 poplocalvars(void)
 {
-	struct localvar *lvp;
-	struct var *vp;
-
+	struct localvar* lvp;
+	struct var* vp;
 	INTOFF;
-	while ((lvp = localvars) != NULL) {
+	while ((lvp = localvars) != NULL)
+	{
 		localvars = lvp->next;
 		vp = lvp->vp;
-		if (vp == NULL) {	/* $- saved */
+		if (vp == NULL)  	/* $- saved */
+		{
 			memcpy(optlist, lvp->text, sizeof optlist);
 			ckfree(lvp->text);
 			optschanged();
-		} else if ((lvp->flags & (VUNSET|VSTRFIXED)) == VUNSET) {
+		}
+		else if ((lvp->flags & (VUNSET | VSTRFIXED)) == VUNSET)
+		{
 			(void)unsetvar(vp->text);
-		} else {
+		}
+		else
+		{
 			if ((vp->flags & VTEXTFIXED) == 0)
 				ckfree(vp->text);
 			vp->flags = lvp->flags;
@@ -809,7 +867,7 @@ poplocalvars(void)
 
 
 int
-setvarcmd(int argc, char **argv)
+setvarcmd(int argc, char** argv)
 {
 	if (argc <= 2)
 		return unsetcmd(argc, argv);
@@ -826,15 +884,15 @@ setvarcmd(int argc, char **argv)
  */
 
 int
-unsetcmd(int argc __unused, char **argv __unused)
+unsetcmd(int argc __unused, char** argv __unused)
 {
-	char **ap;
+	char** ap;
 	int i;
 	int flg_func = 0;
 	int flg_var = 0;
 	int ret = 0;
-
-	while ((i = nextopt("vf")) != '\0') {
+	while ((i = nextopt("vf")) != '\0')
+	{
 		if (i == 'f')
 			flg_func = 1;
 		else
@@ -842,9 +900,9 @@ unsetcmd(int argc __unused, char **argv __unused)
 	}
 	if (flg_func == 0 && flg_var == 0)
 		flg_var = 1;
-
 	INTOFF;
-	for (ap = argptr; *ap ; ap++) {
+	for (ap = argptr; *ap ; ap++)
+	{
 		if (flg_func)
 			ret |= unsetfunc(*ap);
 		if (flg_var)
@@ -861,11 +919,10 @@ unsetcmd(int argc __unused, char **argv __unused)
  */
 
 int
-unsetvar(const char *s)
+unsetvar(const char* s)
 {
-	struct var **vpp;
-	struct var *vp;
-
+	struct var** vpp;
+	struct var* vp;
 	vp = find_var(s, &vpp, NULL);
 	if (vp == NULL)
 		return (0);
@@ -873,14 +930,16 @@ unsetvar(const char *s)
 		return (1);
 	if (vp->text[vp->name_len + 1] != '\0')
 		setvar(s, nullstr, 0);
-	if ((vp->flags & VEXPORT) && localevar(vp->text)) {
+	if ((vp->flags & VEXPORT) && localevar(vp->text))
+	{
 		change_env(s, 0);
 		setlocale(LC_ALL, "");
 		updatecharset();
 	}
 	vp->flags &= ~VEXPORT;
 	vp->flags |= VUNSET;
-	if ((vp->flags & VSTRFIXED) == 0) {
+	if ((vp->flags & VSTRFIXED) == 0)
+	{
 		if ((vp->flags & VTEXTFIXED) == 0)
 			ckfree(vp->text);
 		*vpp = vp->next;
@@ -898,9 +957,10 @@ unsetvar(const char *s)
  */
 
 static int
-varequal(const char *p, const char *q)
+varequal(const char* p, const char* q)
 {
-	while (*p == *q++) {
+	while (*p == *q++)
+	{
 		if (*p++ == '=')
 			return 1;
 	}
@@ -916,26 +976,24 @@ varequal(const char *p, const char *q)
  * lenp is set to the number of characters in 'name'
  */
 
-static struct var *
-find_var(const char *name, struct var ***vppp, int *lenp)
+static struct var*
+find_var(const char* name, struct var** *vppp, int* lenp)
 {
 	unsigned int hashval;
 	int len;
-	struct var *vp, **vpp;
-	const char *p = name;
-
+	struct var* vp, **vpp;
+	const char* p = name;
 	hashval = 0;
 	while (*p && *p != '=')
-		hashval = 2 * hashval + (unsigned char)*p++;
+		hashval = 2 * hashval + (unsigned char) * p++;
 	len = p - name;
-
 	if (lenp)
 		*lenp = len;
 	vpp = &vartab[hashval % VTABSIZE];
 	if (vppp)
 		*vppp = vpp;
-
-	for (vp = *vpp ; vp ; vpp = &vp->next, vp = *vpp) {
+	for (vp = *vpp ; vp ; vpp = &vp->next, vp = *vpp)
+	{
 		if (vp->name_len != len)
 			continue;
 		if (memcmp(vp->text, name, len) != 0)

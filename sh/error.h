@@ -46,11 +46,12 @@
 #include <setjmp.h>
 #include <signal.h>
 
-struct jmploc {
+struct jmploc
+{
 	jmp_buf loc;
 };
 
-extern struct jmploc *handler;
+extern struct jmploc* handler;
 extern volatile sig_atomic_t exception;
 
 /* exceptions */
@@ -80,9 +81,9 @@ extern volatile sig_atomic_t intpending;
 
 void exraise(int) __dead2;
 void onint(void);
-void warning(const char *, ...) __printflike(1, 2);
-void error(const char *, ...) __printf0like(1, 2) __dead2;
-void exerror(int, const char *, ...) __printf0like(2, 3) __dead2;
+void warning(const char*, ...) __printflike(1, 2);
+void error(const char*, ...) __printf0like(1, 2) __dead2;
+void exerror(int, const char*, ...) __printf0like(2, 3) __dead2;
 
 
 /*

@@ -64,9 +64,9 @@ __FBSDID("$FreeBSD: head/bin/sh/miscbltin.c 268873 2014-07-19 14:06:23Z jilles $
 
 #undef eflag
 
-int readcmd(int, char **);
-int umaskcmd(int, char **);
-int ulimitcmd(int, char **);
+int readcmd(int, char**);
+int umaskcmd(int, char**);
+int ulimitcmd(int, char**);
 
 /*
  * The read builtin.  The -r option causes backslashes to be treated like
@@ -86,61 +86,64 @@ int ulimitcmd(int, char **);
  */
 
 int
-readcmd(int argc __unused, char **argv __unused)
+readcmd(int argc __unused, char** argv __unused)
 {
-	char **ap;
+	char** ap;
 	int backslash;
 	char c;
 	int rflag;
-	char *prompt;
-	const char *ifs;
-	char *p;
+	char* prompt;
+	const char* ifs;
+	char* p;
 	int startword;
 	int status;
 	int i;
 	int is_ifs;
 	int saveall = 0;
 	struct timeval tv;
-	char *tvptr;
+	char* tvptr;
 	fd_set ifds;
 	ssize_t nread;
 	int sig;
-
 	rflag = 0;
 	prompt = NULL;
 	tv.tv_sec = -1;
 	tv.tv_usec = 0;
-	while ((i = nextopt("erp:t:")) != '\0') {
-		switch(i) {
-		case 'p':
-			prompt = shoptarg;
-			break;
-		case 'e':
-			break;
-		case 'r':
-			rflag = 1;
-			break;
-		case 't':
-			tv.tv_sec = strtol(shoptarg, &tvptr, 0);
-			if (tvptr == shoptarg)
-				error("timeout value");
-			switch(*tvptr) {
-			case 0:
-			case 's':
+	while ((i = nextopt("erp:t:")) != '\0')
+	{
+		switch (i)
+		{
+			case 'p':
+				prompt = shoptarg;
 				break;
-			case 'h':
-				tv.tv_sec *= 60;
-				/* FALLTHROUGH */
-			case 'm':
-				tv.tv_sec *= 60;
+			case 'e':
 				break;
-			default:
-				error("timeout unit");
-			}
-			break;
+			case 'r':
+				rflag = 1;
+				break;
+			case 't':
+				tv.tv_sec = strtol(shoptarg, &tvptr, 0);
+				if (tvptr == shoptarg)
+					error("timeout value");
+				switch (*tvptr)
+				{
+					case 0:
+					case 's':
+						break;
+					case 'h':
+						tv.tv_sec *= 60;
+					/* FALLTHROUGH */
+					case 'm':
+						tv.tv_sec *= 60;
+						break;
+					default:
+						error("timeout unit");
+				}
+				break;
 		}
 	}
-	if (prompt && isatty(0)) {
+	if (prompt && isatty(0))
+	{
 		out2str(prompt);
 		flushall();
 	}
@@ -148,8 +151,8 @@ readcmd(int argc __unused, char **argv __unused)
 		error("arg count");
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = " \t\n";
-
-	if (tv.tv_sec >= 0) {
+	if (tv.tv_sec >= 0)
+	{
 		/*
 		 * Wait for something to become available.
 		 */
@@ -159,20 +162,23 @@ readcmd(int argc __unused, char **argv __unused)
 		/*
 		 * If there's nothing ready, return an error.
 		 */
-		if (status <= 0) {
+		if (status <= 0)
+		{
 			sig = pendingsig;
 			return (128 + (sig != 0 ? sig : SIGALRM));
 		}
 	}
-
 	status = 0;
 	startword = 2;
 	backslash = 0;
 	STARTSTACKSTR(p);
-	for (;;) {
+	for (;;)
+	{
 		nread = read(STDIN_FILENO, &c, 1);
-		if (nread == -1) {
-			if (errno == EINTR) {
+		if (nread == -1)
+		{
+			if (errno == EINTR)
+			{
 				sig = pendingsig;
 				if (sig == 0)
 					continue;
@@ -182,21 +188,25 @@ readcmd(int argc __unused, char **argv __unused)
 			warning("read error: %s", strerror(errno));
 			status = 2;
 			break;
-		} else if (nread != 1) {
+		}
+		else if (nread != 1)
+		{
 			status = 1;
 			break;
 		}
 		if (c == '\0')
 			continue;
 		CHECKSTRSPACE(1, p);
-		if (backslash) {
+		if (backslash)
+		{
 			backslash = 0;
 			startword = 0;
 			if (c != '\n')
 				USTPUTC(c, p);
 			continue;
 		}
-		if (!rflag && c == '\\') {
+		if (!rflag && c == '\\')
+		{
 			backslash++;
 			continue;
 		}
@@ -206,15 +216,17 @@ readcmd(int argc __unused, char **argv __unused)
 			is_ifs = strchr(" \t\n", c) ? 1 : 2;
 		else
 			is_ifs = 0;
-
-		if (startword != 0) {
-			if (is_ifs == 1) {
+		if (startword != 0)
+		{
+			if (is_ifs == 1)
+			{
 				/* Ignore leading IFS whitespace */
 				if (saveall)
 					USTPUTC(c, p);
 				continue;
 			}
-			if (is_ifs == 2 && startword == 1) {
+			if (is_ifs == 2 && startword == 1)
+			{
 				/* Only one non-whitespace IFS per word */
 				startword = 2;
 				if (saveall)
@@ -222,8 +234,8 @@ readcmd(int argc __unused, char **argv __unused)
 				continue;
 			}
 		}
-
-		if (is_ifs == 0) {
+		if (is_ifs == 0)
+		{
 			/* append this character to the current variable */
 			startword = 0;
 			if (saveall)
@@ -232,26 +244,24 @@ readcmd(int argc __unused, char **argv __unused)
 			USTPUTC(c, p);
 			continue;
 		}
-
 		/* end of variable... */
 		startword = is_ifs;
-
-		if (ap[1] == NULL) {
+		if (ap[1] == NULL)
+		{
 			/* Last variable needs all IFS chars */
 			saveall++;
 			USTPUTC(c, p);
 			continue;
 		}
-
 		STACKSTRNUL(p);
 		setvar(*ap, stackblock(), 0);
 		ap++;
 		STARTSTACKSTR(p);
 	}
 	STACKSTRNUL(p);
-
 	/* Remove trailing IFS chars */
-	for (; stackblock() <= --p; *p = 0) {
+	for (; stackblock() <= --p; *p = 0)
+	{
 		if (!strchr(ifs, *p))
 			break;
 		if (strchr(" \t\n", *p))
@@ -262,7 +272,6 @@ readcmd(int argc __unused, char **argv __unused)
 			break;
 	}
 	setvar(*ap, stackblock(), 0);
-
 	/* Set any remaining args to "" */
 	while (*++ap != NULL)
 		setvar(*ap, nullstr, 0);
@@ -272,26 +281,25 @@ readcmd(int argc __unused, char **argv __unused)
 
 
 int
-umaskcmd(int argc __unused, char **argv __unused)
+umaskcmd(int argc __unused, char** argv __unused)
 {
-	char *ap;
+	char* ap;
 	int mask;
 	int i;
 	int symbolic_mode = 0;
-
-	while ((i = nextopt("S")) != '\0') {
+	while ((i = nextopt("S")) != '\0')
+	{
 		symbolic_mode = 1;
 	}
-
 	INTOFF;
 	mask = umask(0);
 	umask(mask);
 	INTON;
-
-	if ((ap = *argptr) == NULL) {
-		if (symbolic_mode) {
+	if ((ap = *argptr) == NULL)
+	{
+		if (symbolic_mode)
+		{
 			char u[4], g[4], o[4];
-
 			i = 0;
 			if ((mask & S_IRUSR) == 0)
 				u[i++] = 'r';
@@ -300,7 +308,6 @@ umaskcmd(int argc __unused, char **argv __unused)
 			if ((mask & S_IXUSR) == 0)
 				u[i++] = 'x';
 			u[i] = '\0';
-
 			i = 0;
 			if ((mask & S_IRGRP) == 0)
 				g[i++] = 'r';
@@ -309,7 +316,6 @@ umaskcmd(int argc __unused, char **argv __unused)
 			if ((mask & S_IXGRP) == 0)
 				g[i++] = 'x';
 			g[i] = '\0';
-
 			i = 0;
 			if ((mask & S_IROTH) == 0)
 				o[i++] = 'r';
@@ -318,27 +324,34 @@ umaskcmd(int argc __unused, char **argv __unused)
 			if ((mask & S_IXOTH) == 0)
 				o[i++] = 'x';
 			o[i] = '\0';
-
 			out1fmt("u=%s,g=%s,o=%s\n", u, g, o);
-		} else {
+		}
+		else
+		{
 			out1fmt("%.4o\n", mask);
 		}
-	} else {
-		if (is_digit(*ap)) {
+	}
+	else
+	{
+		if (is_digit(*ap))
+		{
 			mask = 0;
-			do {
+			do
+			{
 				if (*ap >= '8' || *ap < '0')
 					error("Illegal number: %s", *argptr);
 				mask = (mask << 3) + (*ap - '0');
-			} while (*++ap != '\0');
+			}
+			while (*++ap != '\0');
 			umask(mask);
-		} else {
-			void *set;
+		}
+		else
+		{
+			void* set;
 			INTOFF;
-			if ((set = setmode (ap)) == 0)
+			if ((set = setmode(ap)) == 0)
 				error("Illegal number: %s", ap);
-
-			mask = getmode (set, ~mask & 0777);
+			mask = getmode(set, ~mask & 0777);
 			umask(~mask & 0777);
 			free(set);
 			INTON;
@@ -357,15 +370,17 @@ umaskcmd(int argc __unused, char **argv __unused)
  * Public domain.
  */
 
-struct limits {
-	const char *name;
-	const char *units;
+struct limits
+{
+	const char* name;
+	const char* units;
 	int	cmd;
 	int	factor;	/* multiply by to get rlim_{cur,max} values */
 	char	option;
 };
 
-static const struct limits limits[] = {
+static const struct limits limits[] =
+{
 #ifdef RLIMIT_CPU
 	{ "cpu time",		"seconds",	RLIMIT_CPU,	   1, 't' },
 #endif
@@ -388,10 +403,10 @@ static const struct limits limits[] = {
 	{ "locked memory",	"kbytes",	RLIMIT_MEMLOCK, 1024, 'l' },
 #endif
 #ifdef RLIMIT_NPROC
-	{ "max user processes",	(char *)0,	RLIMIT_NPROC,      1, 'u' },
+	{ "max user processes",	(char*)0,	RLIMIT_NPROC,      1, 'u' },
 #endif
 #ifdef RLIMIT_NOFILE
-	{ "open files",		(char *)0,	RLIMIT_NOFILE,     1, 'n' },
+	{ "open files",	(char*)0,	RLIMIT_NOFILE,     1, 'n' },
 #endif
 #ifdef RLIMIT_VMEM
 	{ "virtual mem size",	"kbytes",	RLIMIT_VMEM,	1024, 'v' },
@@ -403,22 +418,21 @@ static const struct limits limits[] = {
 	{ "sbsize",		"bytes",	RLIMIT_SBSIZE,	   1, 'b' },
 #endif
 #ifdef RLIMIT_NPTS
-	{ "pseudo-terminals",	(char *)0,	RLIMIT_NPTS,	   1, 'p' },
+	{ "pseudo-terminals",	(char*)0,	RLIMIT_NPTS,	   1, 'p' },
 #endif
 #ifdef RLIMIT_KQUEUES
-	{ "kqueues",		(char *)0,	RLIMIT_KQUEUES,	   1, 'k' },
+	{ "kqueues",	(char*)0,	RLIMIT_KQUEUES,	   1, 'k' },
 #endif
-	{ (char *) 0,		(char *)0,	0,		   0, '\0' }
+	{ (char*) 0,	(char*)0,	0,		   0, '\0' }
 };
 
 enum limithow { SOFT = 0x1, HARD = 0x2 };
 
 static void
-printlimit(enum limithow how, const struct rlimit *limit,
-    const struct limits *l)
+printlimit(enum limithow how, const struct rlimit* limit,
+		   const struct limits* l)
 {
 	rlim_t val = 0;
-
 	if (how & SOFT)
 		val = limit->rlim_cur;
 	else if (how & HARD)
@@ -433,48 +447,46 @@ printlimit(enum limithow how, const struct rlimit *limit,
 }
 
 int
-ulimitcmd(int argc __unused, char **argv __unused)
+ulimitcmd(int argc __unused, char** argv __unused)
 {
 	rlim_t val = 0;
 	enum limithow how = SOFT | HARD;
-	const struct limits	*l;
+	const struct limits*	l;
 	int		set, all = 0;
 	int		optc, what;
 	struct rlimit	limit;
-
 	what = 'f';
 	while ((optc = nextopt("HSatfdsmcnuvlbpwk")) != '\0')
-		switch (optc) {
-		case 'H':
-			how = HARD;
-			break;
-		case 'S':
-			how = SOFT;
-			break;
-		case 'a':
-			all = 1;
-			break;
-		default:
-			what = optc;
+		switch (optc)
+		{
+			case 'H':
+				how = HARD;
+				break;
+			case 'S':
+				how = SOFT;
+				break;
+			case 'a':
+				all = 1;
+				break;
+			default:
+				what = optc;
 		}
-
 	for (l = limits; l->name && l->option != what; l++)
 		;
 	if (!l->name)
 		error("internal error (%c)", what);
-
 	set = *argptr ? 1 : 0;
-	if (set) {
-		char *p = *argptr;
-
+	if (set)
+	{
+		char* p = *argptr;
 		if (all || argptr[1])
 			error("too many arguments");
 		if (strcmp(p, "unlimited") == 0)
 			val = RLIM_INFINITY;
-		else {
-			char *end;
+		else
+		{
+			char* end;
 			uintmax_t uval;
-
 			if (*p < '0' || *p > '9')
 				error("bad number");
 			errno = 0;
@@ -486,38 +498,40 @@ ulimitcmd(int argc __unused, char **argv __unused)
 			uval *= l->factor;
 			val = (rlim_t)uval;
 			if (val < 0 || (uintmax_t)val != uval ||
-			    val == RLIM_INFINITY)
+					val == RLIM_INFINITY)
 				error("bad number");
 		}
 	}
-	if (all) {
-		for (l = limits; l->name; l++) {
+	if (all)
+	{
+		for (l = limits; l->name; l++)
+		{
 			char optbuf[40];
 			if (getrlimit(l->cmd, &limit) < 0)
 				error("can't get limit: %s", strerror(errno));
-
 			if (l->units)
 				snprintf(optbuf, sizeof(optbuf),
-					"(%s, -%c) ", l->units, l->option);
+						 "(%s, -%c) ", l->units, l->option);
 			else
 				snprintf(optbuf, sizeof(optbuf),
-					"(-%c) ", l->option);
+						 "(-%c) ", l->option);
 			out1fmt("%-18s %18s ", l->name, optbuf);
 			printlimit(how, &limit, l);
 		}
 		return 0;
 	}
-
 	if (getrlimit(l->cmd, &limit) < 0)
 		error("can't get limit: %s", strerror(errno));
-	if (set) {
+	if (set)
+	{
 		if (how & SOFT)
 			limit.rlim_cur = val;
 		if (how & HARD)
 			limit.rlim_max = val;
 		if (setrlimit(l->cmd, &limit) < 0)
 			error("bad limit: %s", strerror(errno));
-	} else
+	}
+	else
 		printlimit(how, &limit, l);
 	return 0;
 }

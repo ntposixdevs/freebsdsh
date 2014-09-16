@@ -33,15 +33,17 @@
  * $FreeBSD: head/bin/sh/expand.h 262533 2014-02-26 21:38:42Z jilles $
  */
 
-struct strlist {
-	struct strlist *next;
-	char *text;
+struct strlist
+{
+	struct strlist* next;
+	char* text;
 };
 
 
-struct arglist {
-	struct strlist *list;
-	struct strlist **lastp;
+struct arglist
+{
+	struct strlist* list;
+	struct strlist** lastp;
 };
 
 /*
@@ -57,6 +59,6 @@ struct arglist {
 
 
 union node;
-void expandarg(union node *, struct arglist *, int);
-void rmescapes(char *);
-int casematch(union node *, const char *);
+void expandarg(union node*, struct arglist*, int);
+void rmescapes(char*);
+int casematch(union node*, const char*);

@@ -73,7 +73,7 @@
 #include <unistd.h>
 
 pointer stalloc(int);
-void error(const char *, ...) __printf0like(1, 2);
-int killjob(const char *, int);
+void error(const char*, ...) __printf0like(1, 2);
+int killjob(const char*, int);
 
-extern char *commandname;
+extern char* commandname;

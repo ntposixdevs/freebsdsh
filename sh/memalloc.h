@@ -35,29 +35,30 @@
 
 #include <string.h>
 
-struct stackmark {
-	struct stack_block *stackp;
-	char *stacknxt;
+struct stackmark
+{
+	struct stack_block* stackp;
+	char* stacknxt;
 	int stacknleft;
 };
 
 
-extern char *stacknxt;
+extern char* stacknxt;
 extern int stacknleft;
-extern char *sstrend;
+extern char* sstrend;
 
 pointer ckmalloc(size_t);
 pointer ckrealloc(pointer, int);
 void ckfree(pointer);
-char *savestr(const char *);
+char* savestr(const char*);
 pointer stalloc(int);
 void stunalloc(pointer);
-void setstackmark(struct stackmark *);
-void popstackmark(struct stackmark *);
-char *growstackstr(void);
-char *makestrspace(int, char *);
-char *stputbin(const char *data, size_t len, char *p);
-char *stputs(const char *data, char *p);
+void setstackmark(struct stackmark*);
+void popstackmark(struct stackmark*);
+char* growstackstr(void);
+char* makestrspace(int, char*);
+char* stputbin(const char* data, size_t len, char* p);
+char* stputs(const char* data, char* p);
 
 
 

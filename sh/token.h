@@ -28,7 +28,8 @@
 #define TNOT 27
 
 /* Array indicating which tokens mark the end of a list */
-const char tokendlist[] = {
+const char tokendlist[] =
+{
 	1,
 	0,
 	0,
@@ -59,7 +60,8 @@ const char tokendlist[] = {
 	0,
 };
 
-const char *const tokname[] = {
+const char* const tokname[] =
+{
 	"end of file",
 	"newline",
 	"\";\"",
@@ -92,7 +94,8 @@ const char *const tokname[] = {
 
 #define KWDOFFSET 13
 
-const char *const parsekwd[] = {
+const char* const parsekwd[] =
+{
 	"if",
 	"then",
 	"else",

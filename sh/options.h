@@ -33,13 +33,14 @@
  * $FreeBSD: head/bin/sh/options.h 223281 2011-06-18 23:43:28Z jilles $
  */
 
-struct shparam {
+struct shparam
+{
 	int nparam;		/* # of positional parameters (without $0) */
 	unsigned char malloc;	/* if parameter list dynamically allocated */
 	unsigned char reset;	/* if getopts has been reset */
-	char **p;		/* parameter list */
-	char **optnext;		/* next parameter to be processed by getopts */
-	char *optptr;		/* used by getopts */
+	char** p;		/* parameter list */
+	char** optnext;		/* next parameter to be processed by getopts */
+	char* optptr;		/* used by getopts */
 };
 
 
@@ -66,18 +67,20 @@ struct shparam {
 
 #define NOPTS	19
 
-struct optent {
-	const char *name;
+struct optent
+{
+	const char* name;
 	const char letter;
 	char val;
 };
 
 #ifdef DEFINE_OPTIONS
-struct optent optlist[NOPTS] = {
+struct optent optlist[NOPTS] =
+{
 	{ "errexit",	'e',	0 },
 	{ "noglob",	'f',	0 },
 	{ "ignoreeof",	'I',	0 },
-	{ "interactive",'i',	0 },
+	{ "interactive", 'i',	0 },
 	{ "monitor",	'm',	0 },
 	{ "noexec",	'n',	0 },
 	{ "stdin",	's',	0 },
@@ -99,16 +102,16 @@ extern struct optent optlist[NOPTS];
 #endif
 
 
-extern char *minusc;		/* argument to -c option */
-extern char *arg0;		/* $0 */
+extern char* minusc;		/* argument to -c option */
+extern char* arg0;		/* $0 */
 extern struct shparam shellparam;  /* $@ */
-extern char **argptr;		/* argument list for builtin commands */
-extern char *shoptarg;		/* set by nextopt */
-extern char *nextopt_optptr;	/* used by nextopt */
+extern char** argptr;		/* argument list for builtin commands */
+extern char* shoptarg;		/* set by nextopt */
+extern char* nextopt_optptr;	/* used by nextopt */
 
-void procargs(int, char **);
+void procargs(int, char**);
 void optschanged(void);
-void setparam(char **);
-void freeparam(struct shparam *);
-int nextopt(const char *);
-void getoptsreset(const char *);
+void setparam(char**);
+void freeparam(struct shparam*);
+int nextopt(const char*);
+void getoptsreset(const char*);
