@@ -29,4 +29,42 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)eval.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/eval.h 255215 2013-09-04 22:10:16Z jilles $
  */
+
+extern char *commandname;	/* currently executing command */
+extern int exitstatus;		/* exit status of last command */
+extern int oexitstatus;		/* saved exit status */
+extern struct strlist *cmdenviron;  /* environment for builtin command */
+
+
+struct backcmd {		/* result of evalbackcmd */
+	int fd;			/* file descriptor to read from */
+	char *buf;		/* buffer */
+	int nleft;		/* number of chars in buffer */
+	struct job *jp;		/* job structure for command */
+};
+
+void reseteval(void);
+
+/* flags in argument to evaltree/evalstring */
+#define EV_EXIT 01		/* exit after evaluating tree */
+#define EV_TESTED 02		/* exit status is checked; ignore -e flag */
+#define EV_BACKCMD 04		/* command executing within back quotes */
+
+void evalstring(char *, int);
+union node;	/* BLETCH for ansi C */
+void evaltree(union node *, int);
+void evalbackcmd(union node *, struct backcmd *);
+
+/* in_function returns nonzero if we are currently evaluating a function */
+#define in_function()	funcnest
+extern int funcnest;
+extern int evalskip;
+extern int skipcount;
+
+/* reasons for skipping commands (see comment on breakcmd routine) */
+#define SKIPBREAK	1
+#define SKIPCONT	2
+#define SKIPRETURN	3

@@ -29,4 +29,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)main.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/main.h 229220 2012-01-01 22:17:12Z jilles $
  */
+
+extern int rootpid;	/* pid of main shell */
+extern int rootshell;	/* true if we aren't a child of the main shell */
+extern struct jmploc main_handler;	/* top level exception handler */
+
+void readcmdfile(const char *);

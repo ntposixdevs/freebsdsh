@@ -8,6 +8,9 @@
 *.gch
 *.pch
 
+# debug info
+*.pdb
+
 # Libraries
 *.lib
 *.a
@@ -27,3 +30,13 @@
 *.i*86
 *.x86_64
 *.hex
+
+# Visual Studio project-specific files
+*.suo
+*.user
+ipch/
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+*.cachefile

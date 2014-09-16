@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Kenneth Almquist.
+ * Copyright (c) 1995
+ *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,4 +26,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)arith.h	1.1 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/arith.h 223060 2011-06-13 21:03:27Z jilles $
  */
+
+#include "shell.h"
+
+#define DIGITS(var) (3 + (2 + CHAR_BIT * sizeof((var))) / 3)
+
+arith_t arith(const char *);
+void arith_lex_reset(void);

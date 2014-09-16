@@ -29,4 +29,49 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)shell.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/shell.h 253658 2013-07-25 19:48:15Z jilles $
  */
+
+#ifndef SHELL_H_
+#define SHELL_H_
+
+#include <inttypes.h>
+
+/*
+ * The follow should be set to reflect the type of system you have:
+ *	JOBS -> 1 if you have Berkeley job control, 0 otherwise.
+ *	define DEBUG=1 to compile in debugging (set global "debug" to turn on)
+ *	define DEBUG=2 to compile in and turn on debugging.
+ *
+ * When debugging is on, debugging info will be written to ./trace and
+ * a quit signal will generate a core dump.
+ */
+
+
+#define	JOBS 1
+/* #define DEBUG 1 */
+
+/*
+ * Type of used arithmetics. SUSv3 requires us to have at least signed long.
+ */
+typedef intmax_t arith_t;
+#define	ARITH_FORMAT_STR  "%" PRIdMAX
+#define	atoarith_t(arg)  strtoimax(arg, NULL, 0)
+#define	strtoarith_t(nptr, endptr, base)  strtoimax(nptr, endptr, base)
+#define	ARITH_MIN INTMAX_MIN
+#define	ARITH_MAX INTMAX_MAX
+
+typedef void *pointer;
+
+#include <sys/cdefs.h>
+
+extern char nullstr[1];		/* null string */
+
+#ifdef DEBUG
+#define TRACE(param)  sh_trace param
+#else
+#define TRACE(param)
+#endif
+
+#endif /* !SHELL_H_ */

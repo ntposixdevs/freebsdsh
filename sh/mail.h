@@ -29,4 +29,8 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)mail.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/mail.h 127958 2004-04-06 20:06:54Z markm $
  */
+
+void chkmail(int);

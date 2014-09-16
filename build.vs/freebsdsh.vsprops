@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="Windows-1252"?>
+<VisualStudioPropertySheet
+	ProjectType="Visual C++"
+	Version="8.00"
+	Name="POSIX environment"
+	OutputDirectory="$(SolutionDir)bin\$(PlatformName)_$(ConfigurationName)"
+	IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)"
+	CharacterSet="0"
+	>
+	<Tool
+		Name="VCCLCompilerTool"
+		AdditionalOptions="-sdl -MP"
+		AdditionalIncludeDirectories="$(PSXCRT_ROOT_WIN)include;$(PSXCRT_ROOT_WIN)include/compat"
+		PreprocessorDefinitions="_NT_POSIX_;_POSIX_;__INTERIX;_ALL_SOURCE;unix;_REENTRANT;__STDC__"
+		IgnoreStandardIncludePath="true"
+		EnableFunctionLevelLinking="true"
+		PrecompiledHeaderThrough="stdinc.h"
+		WarningLevel="4"
+		DebugInformationFormat="1"
+		UndefinePreprocessorDefinitions="_WIN32"
+		OmitDefaultLibName="true"
+	/>
+	<Tool
+		Name="VCLinkerTool"
+		AdditionalOptions="-ignore:4078,4199 -osversion:6.0 -subsystem:console,6.0 -pdbcompress -dynamicbase -nxcompat"
+		Version="6.0"
+		AdditionalLibraryDirectories="$(OutDir);$(PSXCRT_ROOT_WIN)lib/$(PlatformName);$(INTERIX_ROOT_WIN)usr/lib/$(PlatformName)"
+		IgnoreDefaultLibraryNames=""
+		GenerateDebugInformation="true"
+		SubSystem="8"
+		EntryPointSymbol="__PosixProcessStartup"
+		SetChecksum="true"
+		SupportUnloadOfDelayLoadedDLL="true"
+		MergeSections=".CRT=.rdata"
+	/>
+	<Tool
+		Name="VCNMakeTool"
+		BuildCommandLine="posix.exe /u /c /bin/ksh -l -c"
+		ReBuildCommandLine="posix.exe /u /c /bin/ksh -l -c"
+		CleanCommandLine="posix.exe /u /c /bin/ksh -l -c"
+		Output=""
+		PreprocessorDefinitions="__INTERIX;_POSIX_;unix;_ALL_SOURCE;__STDC__;_REENTRANT"
+		IncludeSearchPath="$(INTERIX_ROOT_WIN)usr/include;$(INTERIX_ROOT_WIN)usr/local/include"
+		ForcedIncludes=""
+		AssemblySearchPath=""
+		ForcedUsingAssemblies=""
+		CompileAsManaged=""
+	/>
+	<Tool
+		Name="VCResourceCompilerTool"
+		PreprocessorDefinitions="__INTERIX;_POSIX_;_NT_POSIX_;APP_NAME=L\&quot;$(TargetName)\&quot;;$(PlatformName)&#x0A;"
+		AdditionalIncludeDirectories="$(IntDir);$(INTERIX_ROOT_WIN)usr\include"
+	/>
+</VisualStudioPropertySheet>

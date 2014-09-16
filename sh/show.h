@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1991, 1993
- *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Kenneth Almquist.
+ * Copyright (c) 1995
+ *      The Regents of the University of California.  All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,4 +26,15 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)show.h	1.1 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/show.h 200956 2009-12-24 18:41:14Z jilles $
  */
+
+void showtree(union node *);
+#ifdef DEBUG
+void sh_trace(const char *, ...) __printflike(1, 2);
+void trargs(char **);
+void trputc(int);
+void trputs(const char *);
+void opentrace(void);
+#endif

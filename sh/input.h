@@ -29,4 +29,37 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)input.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/input.h 271593 2014-09-14 16:46:30Z jilles $
  */
+
+/* PEOF (the end of file marker) is defined in syntax.h */
+
+/*
+ * The input line number.  Input.c just defines this variable, and saves
+ * and restores it when files are pushed and popped.  The user of this
+ * package must set its value.
+ */
+extern int plinno;
+extern int parsenleft;		/* number of characters left in input buffer */
+extern const char *parsenextc;	/* next character in input buffer */
+
+struct alias;
+struct parsefile;
+
+void resetinput(void);
+int pgetc(void);
+int preadbuffer(void);
+int preadateof(void);
+void pungetc(void);
+void pushstring(const char *, int, struct alias *);
+void setinputfile(const char *, int);
+void setinputfd(int, int);
+void setinputstring(const char *, int);
+void popfile(void);
+struct parsefile *getcurrentfile(void);
+void popfilesupto(struct parsefile *);
+void popallfiles(void);
+void closescript(void);
+
+#define pgetc_macro()	(--parsenleft >= 0? *parsenextc++ : preadbuffer())

@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Kenneth Almquist.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,4 +26,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)myhistedit.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/myhistedit.h 229220 2012-01-01 22:17:12Z jilles $
  */
+
+#include <histedit.h>
+
+extern History *hist;
+extern EditLine *el;
+extern int displayhist;
+
+void histedit(void);
+void sethistsize(const char *);
+void setterm(const char *);
+

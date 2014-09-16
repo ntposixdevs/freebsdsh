@@ -1,9 +1,6 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1995
  *	The Regents of the University of California.  All rights reserved.
- *
- * This code is derived from software contributed to Berkeley by
- * Kenneth Almquist.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,4 +26,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ * $FreeBSD: head/bin/sh/cd.h 223060 2011-06-13 21:03:27Z jilles $
  */
+
+void	 pwd_init(int);

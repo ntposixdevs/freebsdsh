@@ -29,4 +29,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)mystring.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/mystring.h 268920 2014-07-20 12:06:52Z jilles $
  */
+
+#include <string.h>
+
+int number(const char *);
+int is_number(const char *);
+
+#define equal(s1, s2)	(strcmp(s1, s2) == 0)

@@ -28,5 +28,71 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
  */
+
+#ifndef lint
+#if 0
+static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
+#endif
+#endif /* not lint */
+#include <sys/cdefs.h>
+__FBSDID("$FreeBSD: head/bin/sh/mystring.c 270102 2014-08-17 16:40:29Z jilles $");
+
+/*
+ * String functions.
+ *
+ *	equal(s1, s2)		Return true if strings are equal.
+ *	number(s)		Convert a string of digits to an integer.
+ *	is_number(s)		Return true if s is a string of digits.
+ */
+
+#include <stdlib.h>
+#include "shell.h"
+#include "syntax.h"
+#include "error.h"
+#include "mystring.h"
+
+
+char nullstr[1];		/* zero length string */
+
+/*
+ * equal - #defined in mystring.h
+ */
+
+
+/*
+ * Convert a string of digits to an integer, printing an error message on
+ * failure.
+ */
+
+int
+number(const char *s)
+{
+	if (! is_number(s))
+		error("Illegal number: %s", s);
+	return atoi(s);
+}
+
+
+
+/*
+ * Check for a valid number.  This should be elsewhere.
+ */
+
+int
+is_number(const char *p)
+{
+	const char *q;
+
+	if (*p == '\0')
+		return 0;
+	while (*p == '0')
+		p++;
+	for (q = p; *q != '\0'; q++)
+		if (! is_digit(*q))
+			return 0;
+	if (q - p > 10 ||
+	    (q - p == 10 && memcmp(p, "2147483647", 10) > 0))
+		return 0;
+	return 1;
+}

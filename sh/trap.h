@@ -29,4 +29,21 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)trap.h	8.3 (Berkeley) 6/5/95
+ * $FreeBSD: head/bin/sh/trap.h 260654 2014-01-14 22:56:25Z jilles $
  */
+
+extern volatile sig_atomic_t pendingsig;
+extern volatile sig_atomic_t pendingsig_waitcmd;
+extern int in_dotrap;
+
+void clear_traps(void);
+int have_traps(void);
+void setsignal(int);
+void ignoresig(int);
+int issigchldtrapped(void);
+void onsig(int);
+void dotrap(void);
+void setinteractive(int);
+void exitshell(int) __dead2;
+void exitshell_savedstatus(void) __dead2;

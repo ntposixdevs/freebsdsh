@@ -1,4 +1,4 @@
 freebsdsh
 =========
 
-Fork of the FreeBSD defauly shell
+Fork of the FreeBSD default shell

@@ -1,0 +1,126 @@
+// This file was originally created Wed Jul 9 2008 by the Interix application Wizard.
+// For more info: http://sourceforge.net/projects/interix-devenv
+// Version resource include file for pdksh5214
+// The purpose of this file is to support automatic versioning without any need of Windows headers
+// with interaction of GNU tools (GNU make, autoconf, automake etc)
+// Copyright 2008 FixOtriX
+
+#include <config.h>
+
+//===================================================================
+#define _QUOTE(x) #x
+#define QUOTE(x) _QUOTE(x)
+
+// 64-bit version number as comma-separated list of 4 uint16_t integers
+// TODO: Delete these if the project support automatic version numbering in the configure script.
+#ifndef KSH_VERSION_MAJOR
+#define KSH_VERSION_MAJOR           5
+#define KSH_VERSION_MINOR           2
+#define KSH_VERSION_RELEASE         14
+#define KSH_VERSION_BUILD           0    // release or cvs/svn snapshot
+#define KSH_VERSION_BETA            0    // TRUE 1  or FALSE 0
+#define KSH_VERSION_BUILD_COMMENT   L"pdksh-5.2.14, released 1999-07-13"
+#define KSH_BUILD_HOST              L"x86_64-pc-interix6.0"
+#endif
+
+// Common strings from config.h - only needed to be edited once
+// All strings are nullterminated UTF16 unicode strings
+//===================================================================
+#define VER_INTERNALNAME_STR        L"ksh"
+#define VER_ORIGINALFILENAME_STR    L"ksh.exe"
+#ifdef __INTERIX
+#define VER_TARGET_STR              L"Interix POSIX subsystem - " KSH_BUILD_HOST
+#else
+#define VER_TARGET_STR              L"Windows - " KSH_BUILD_HOST
+#endif
+#define VER_PRODUCTNAME_STR         L"pdksh - the Public Domain Korn Shell <www.cs.mun.ca/~michael/pdksh>"
+#define VER_FILEDESCRIPTION_STR     L"ksh executable"
+#define VER_COMPANYNAME_STR         L"pdksh maintainers: Michael Rendell, Eric Gisin"
+#define VER_LEGALCOPYRIGHT_STR      L"No copyright"
+#define VER_LEGALTRADEMARKS_STR     L"pdksh is provided AS IS, with NO WARRANTY, either expressed or implied"
+#define VER_COMMENTS_STR            VER_FILEDESCRIPTION_STR L" built for " VER_TARGET_STR // L". Report bugs to " PACKAGE_BUGREPORT
+#if (KSH_VERSION_BUILD == 0)
+#define VER_SPECIAL_STR             L"This is an official release"
+#define VER_PRIVATE_STR             KSH_VERSION_BUILD_COMMENT
+#else
+#define VER_SPECIAL_STR             L"This is an intermediate release built from current cvs source tree"
+#define VER_PRIVATE_STR             KSH_VERSION_BUILD_COMMENT
+#endif
+//#define VER_FILEVERSION_STR         VERSION
+
+//===================================================================
+// version macros - do not edit!!
+#define VER_PRODUCTVERSION          KSH_VERSION_MAJOR,KSH_VERSION_MINOR,KSH_VERSION_RELEASE,KSH_VERSION_BUILD
+#define VER_PRODUCTVERSION_STR      QUOTE(KSH_VERSION_MAJOR) "." QUOTE(KSH_VERSION_MINOR) "." QUOTE(KSH_VERSION_RELEASE) "." QUOTE(KSH_VERSION_BUILD)
+#define VER_FILEVERSION             VER_PRODUCTVERSION
+#ifndef VER_FILEVERSION_STR
+#define VER_FILEVERSION_STR         VER_PRODUCTVERSION_STR
+#endif
+
+#define VER_LANGNEUTRAL
+#ifndef VER_VERSION_UNICODE_LANG
+#define VER_VERSION_UNICODE_LANG	L"000004B0"		/* LANG_NEUTRAL/SUBLANG_NEUTRAL, Unicode CP */
+#endif
+#ifndef VER_VERSION_TRANSLATION
+#define VER_VERSION_TRANSLATION		0x0000, 0x04B0
+#endif
+
+#if defined(_DEBUG) || defined(DEBUG) || defined(DBG) || defined(POSIX_DEBUG)
+#define VER_DEBUG                   0x00000001L     // VS_FF_DEBUG
+#else
+#define VER_DEBUG                   0
+#endif
+#define VER_PRERELEASE              KSH_VERSION_BETA
+#define VER_PRIVATE                 0x00000008L     // VS_FF_PRIVATEBUILD
+#define VER_SPECIAL                 0x00000020L     // VS_FF_SPECIALBUILD
+
+#ifdef _DLL
+#define VER_FILETYPE                0x00000002L     // VFT_DLL
+#else
+#define VER_FILETYPE                0x00000001L     // VFT_APP
+#endif
+#define VER_FILESUBTYPE             0x00000000L     // VFT2_UNKNOWN
+#define VER_FILEFLAGSMASK           0x0000003FL     // VS_FFI_FILEFLAGSMASK
+#define VER_FILEOS                  0x00040000L     // VOS_NT
+#define VER_FILEFLAGS               (VER_PRERELEASE|VER_DEBUG|VER_PRIVATE|VER_SPECIAL)
+
+#ifndef VS_VERSION_INFO
+#define VS_VERSION_INFO             1
+#endif
+
+#ifdef RC_INVOKED
+
+VS_VERSION_INFO     VERSIONINFO
+FILEVERSION         VER_FILEVERSION
+PRODUCTVERSION      VER_PRODUCTVERSION
+FILEFLAGSMASK       VER_FILEFLAGSMASK
+FILEFLAGS           VER_FILEFLAGS
+FILEOS              VER_FILEOS
+FILETYPE            VER_FILETYPE
+FILESUBTYPE         VER_FILESUBTYPE
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK L"000004B0"			 // VER_VERSION_UNICODE_LANG, removed for GNU windres 
+        BEGIN
+            VALUE "CompanyName",     VER_COMPANYNAME_STR
+            VALUE "FileDescription", VER_FILEDESCRIPTION_STR
+            VALUE "FileVersion",     VER_FILEVERSION_STR
+            VALUE "InternalName",    VER_INTERNALNAME_STR
+            VALUE "LegalCopyright",  VER_LEGALCOPYRIGHT_STR
+            VALUE "OriginalFilename",VER_ORIGINALFILENAME_STR
+            VALUE "ProductName",     VER_PRODUCTNAME_STR
+            VALUE "ProductVersion",  VER_PRODUCTVERSION_STR
+            VALUE "Comments",        VER_COMMENTS_STR
+            VALUE "SpecialBuild",    VER_SPECIAL_STR
+			VALUE "PrivateBuild",    VER_PRIVATE_STR
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", VER_VERSION_TRANSLATION
+    END
+END
+
+#endif
+

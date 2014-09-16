@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 1991, 1993
+ * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
@@ -29,4 +29,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)alias.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/alias.h 223060 2011-06-13 21:03:27Z jilles $
  */
+
+#define ALIASINUSE	1
+
+struct alias {
+	struct alias *next;
+	char *name;
+	char *val;
+	int flag;
+};
+
+struct alias *lookupalias(const char *, int);

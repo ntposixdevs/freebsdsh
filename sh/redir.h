@@ -29,4 +29,17 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
+ *	@(#)redir.h	8.2 (Berkeley) 5/4/95
+ * $FreeBSD: head/bin/sh/redir.h 254426 2013-08-16 20:24:41Z jilles $
  */
+
+/* flags passed to redirect */
+#define REDIR_PUSH 01		/* save previous values of file descriptors */
+#define REDIR_BACKQ 02		/* save the command output in memory */
+
+union node;
+void redirect(union node *, int);
+void popredir(void);
+int fd0_redirected_p(void);
+void clearredir(void);
+
