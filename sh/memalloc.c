@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/memalloc.c 258776 2013-11-30 21:27:11Z jilles $	*/
+/*	static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,23 +32,15 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)memalloc.c	8.3 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/memalloc.c 258776 2013-11-30 21:27:11Z jilles $");
-
-#include <sys/param.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "shell.h"
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
 #include "mystring.h"
 #include "expand.h"
-#include <stdlib.h>
-#include <unistd.h>
 
 /*
  * Like malloc, but returns an error when out of space.

@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/redir.c 263777 2014-03-26 20:43:40Z jilles $	*/
+/*	static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)redir.c	8.2 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/redir.c 263777 2014-03-26 20:43:40Z jilles $");
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
@@ -46,10 +40,6 @@ __FBSDID("$FreeBSD: head/bin/sh/redir.c 263777 2014-03-26 20:43:40Z jilles $");
 #include <errno.h>
 #include <unistd.h>
 #include <stdlib.h>
-
-/*
- * Code for dealing with input/output redirection.
- */
 
 #include "shell.h"
 #include "nodes.h"
@@ -61,6 +51,9 @@ __FBSDID("$FreeBSD: head/bin/sh/redir.c 263777 2014-03-26 20:43:40Z jilles $");
 #include "error.h"
 #include "options.h"
 
+/*
+ * Code for dealing with input/output redirection.
+ */
 
 #define EMPTY -2		/* marks an unused slot in redirtab */
 #define CLOSED -1		/* fd was not open before redir */

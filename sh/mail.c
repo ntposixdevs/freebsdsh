@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/mail.c 213760 2010-10-13 04:01:01Z obrien $	*/
+/*	static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,18 +32,9 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mail.c	8.2 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/mail.c 213760 2010-10-13 04:01:01Z obrien $");
-
-/*
- * Routines to check for mail.  (Perhaps make part of main.c?)
- */
-
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <stdlib.h>
 #include "shell.h"
 #include "exec.h"	/* defines padvance() */
 #include "mail.h"
@@ -49,9 +42,10 @@ __FBSDID("$FreeBSD: head/bin/sh/mail.c 213760 2010-10-13 04:01:01Z obrien $");
 #include "output.h"
 #include "memalloc.h"
 #include "error.h"
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <stdlib.h>
+
+/*
+ * Routines to check for mail.  (Perhaps make part of main.c?)
+ */
 
 
 #define MAXMBOXES 10

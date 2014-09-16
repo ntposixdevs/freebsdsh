@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/var.c 263847 2014-03-27 22:57:23Z jilles $	*/
+/*	static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,22 +32,10 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)var.c	8.3 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/var.c 263847 2014-03-27 22:57:23Z jilles $");
-
+#include <sys/types.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <paths.h>
-
-/*
- * Shell variables.
- */
-
 #include <locale.h>
 #include <langinfo.h>
 
@@ -68,6 +58,9 @@ __FBSDID("$FreeBSD: head/bin/sh/var.c 263847 2014-03-27 22:57:23Z jilles $");
 #include "myhistedit.h"
 #endif
 
+/*
+ * Shell variables.
+ */
 
 #define VTABSIZE 39
 

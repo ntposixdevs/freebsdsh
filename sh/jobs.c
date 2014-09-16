@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/jobs.c 271144 2014-09-04 21:48:33Z jilles $	*/
+/*	static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/jobs.c 271144 2014-09-04 21:48:33Z jilles $");
-
+#include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
 #include <sys/resource.h>

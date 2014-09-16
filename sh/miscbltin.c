@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/miscbltin.c 268873 2014-07-19 14:06:23Z jilles $	*/
+/*	static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,18 +32,6 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/miscbltin.c 268873 2014-07-19 14:06:23Z jilles $");
-
-/*
- * Miscellaneous builtins.
- */
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -61,6 +51,10 @@ __FBSDID("$FreeBSD: head/bin/sh/miscbltin.c 268873 2014-07-19 14:06:23Z jilles $
 #include "mystring.h"
 #include "syntax.h"
 #include "trap.h"
+
+/*
+ * Miscellaneous builtins.
+ */
 
 #undef eflag
 

@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/output.c 253649 2013-07-25 13:09:17Z jilles $	*/
+/*	static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,24 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)output.c	8.2 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/output.c 253649 2013-07-25 13:09:17Z jilles $");
-
-/*
- * Shell output routines.  We use our own output routines because:
- *	When a builtin command is interrupted we have to discard
- *		any pending output.
- *	When a builtin command appears in back quotes, we want to
- *		save the output of the command in a region obtained
- *		via malloc, rather than doing a fork and reading the
- *		output of the command via a pipe.
- */
-
+#include <sys/types.h>
 #include <stdio.h>	/* defines BUFSIZ */
 #include <string.h>
 #include <stdarg.h>
@@ -62,6 +47,15 @@ __FBSDID("$FreeBSD: head/bin/sh/output.c 253649 2013-07-25 13:09:17Z jilles $");
 #include "error.h"
 #include "var.h"
 
+/*
+ * Shell output routines.  We use our own output routines because:
+ *	When a builtin command is interrupted we have to discard
+ *		any pending output.
+ *	When a builtin command appears in back quotes, we want to
+ *		save the output of the command in a region obtained
+ *		via malloc, rather than doing a fork and reading the
+ *		output of the command via a pipe.
+ */
 
 #define OUTBUFSIZ BUFSIZ
 #define MEM_OUT -2		/* output to dynamically allocated memory */

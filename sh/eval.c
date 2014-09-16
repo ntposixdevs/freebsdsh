@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/eval.c 268927 2014-07-20 20:29:09Z jilles $	*/
+/*	static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/eval.c 268927 2014-07-20 20:29:09Z jilles $");
-
+#include <sys/types.h>
 #include <paths.h>
 #include <signal.h>
 #include <stdlib.h>

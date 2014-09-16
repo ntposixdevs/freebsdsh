@@ -38,10 +38,10 @@ static char const copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";
+/*	static char sccsid[] = "@(#)mknodes.c	8.2 (Berkeley) 5/4/95";	*/
 #endif /* not lint */
 #endif
-//__FBSDID("$FreeBSD: head/bin/sh/mknodes.c 196634 2009-08-28 22:41:25Z jilles $");
+///*	$FreeBSD: head/bin/sh/mknodes.c 196634 2009-08-28 22:41:25Z jilles $	*/
 
 /*
  * This program reads the nodetypes file and nodes.c.pat file.  It generates

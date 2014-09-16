@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/parser.c 271593 2014-09-14 16:46:30Z jilles $	*/
+/*	static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/parser.c 271593 2014-09-14 16:46:30Z jilles $");
-
+#include <sys/types.h>
 #include <stdlib.h>
 #include <unistd.h>
 #include <stdio.h>

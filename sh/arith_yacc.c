@@ -1,3 +1,4 @@
+/*	$FreeBSD: head/bin/sh/arith_yacc.c 270246 2014-08-20 20:15:43Z jilles $	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,9 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/arith_yacc.c 270246 2014-08-20 20:15:43Z jilles $");
-
+#include <sys/types.h>
 #include <limits.h>
 #include <errno.h>
 #include <inttypes.h>

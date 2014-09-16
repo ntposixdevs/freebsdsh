@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/histedit.c 270113 2014-08-17 19:36:56Z jilles $	*/
+/*	static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,20 +32,13 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)histedit.c	8.2 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/histedit.c 270113 2014-08-17 19:36:56Z jilles $");
-
-#include <sys/param.h>
+#include <sys/types.h>
 #include <limits.h>
 #include <paths.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+
 /*
  * Editline and history functions (and glue).
  */

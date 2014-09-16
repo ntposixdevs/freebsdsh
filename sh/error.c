@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/error.c 216622 2010-12-21 20:47:06Z jilles $	*/
+/*	static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,18 +32,14 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)error.c	8.2 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/error.c 216622 2010-12-21 20:47:06Z jilles $");
-
 /*
  * Errors and exceptions.
  */
-
+#include <sys/types.h>
+#include <errno.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <unistd.h>
 #include "shell.h"
 #include "main.h"
 #include "options.h"
@@ -50,10 +48,6 @@ __FBSDID("$FreeBSD: head/bin/sh/error.c 216622 2010-12-21 20:47:06Z jilles $");
 #include "nodes.h" /* show.h needs nodes.h */
 #include "show.h"
 #include "trap.h"
-#include <signal.h>
-#include <stdlib.h>
-#include <unistd.h>
-#include <errno.h>
 
 
 /*

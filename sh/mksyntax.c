@@ -38,10 +38,10 @@ static char const copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";
+/*	static char sccsid[] = "@(#)mksyntax.c	8.2 (Berkeley) 5/4/95";	*/
 #endif /* not lint */
 #endif
-//__FBSDID("$FreeBSD: head/bin/sh/mksyntax.c 246522 2013-02-07 22:42:33Z jilles $");
+///*	$FreeBSD: head/bin/sh/mksyntax.c 246522 2013-02-07 22:42:33Z jilles $	*/
 
 /*
  * This program creates syntax.h and syntax.c.

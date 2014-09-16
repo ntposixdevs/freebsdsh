@@ -1,3 +1,4 @@
+/*	$FreeBSD: head/bin/sh/bltin/echo.c 127958 2004-04-06 20:06:54Z markm $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -32,15 +33,13 @@
  *	@(#)echo.c	8.2 (Berkeley) 5/4/95
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/bltin/echo.c 127958 2004-04-06 20:06:54Z markm $");
-
 /*
  * Echo command.
  */
 
-#define main echocmd
+#include <sys/types.h>
 
+#define main echocmd
 #include "bltin.h"
 
 /* #define eflag 1 */

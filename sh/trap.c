@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/trap.c 260654 2014-01-14 22:56:25Z jilles $	*/
+/*	static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)trap.c	8.5 (Berkeley) 6/5/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/trap.c 260654 2014-01-14 22:56:25Z jilles $");
-
+#include <sys/types.h>
 #include <signal.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -57,7 +52,6 @@ __FBSDID("$FreeBSD: head/bin/sh/trap.c 260654 2014-01-14 22:56:25Z jilles $");
 #include "mystring.h"
 #include "builtins.h"
 #include "myhistedit.h"
-
 
 /*
  * Sigmode records the current value of the signal handlers for the various

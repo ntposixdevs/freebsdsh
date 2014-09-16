@@ -778,6 +778,10 @@
 					>
 				</File>
 				<File
+					RelativePath=".\freebsdsh_res.h"
+					>
+				</File>
+				<File
 					RelativePath=".\freebsdsh_res.rc"
 					>
 				</File>
@@ -877,6 +881,30 @@
 				>
 				<File
 					RelativePath="..\sh\sh.1"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="github"
+				>
+				<File
+					RelativePath="..\.gitattributes"
+					>
+				</File>
+				<File
+					RelativePath="..\.gitignore"
+					>
+				</File>
+				<File
+					RelativePath="..\COPYRIGHT"
+					>
+				</File>
+				<File
+					RelativePath="..\LICENSE"
+					>
+				</File>
+				<File
+					RelativePath="..\README.md"
 					>
 				</File>
 			</Filter>

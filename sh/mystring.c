@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/mystring.c 270102 2014-08-17 16:40:29Z jilles $	*/
+/*	static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,13 +32,12 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)mystring.c	8.2 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/mystring.c 270102 2014-08-17 16:40:29Z jilles $");
+#include <sys/types.h>
+#include <stdlib.h>
+#include "shell.h"
+#include "syntax.h"
+#include "error.h"
+#include "mystring.h"
 
 /*
  * String functions.
@@ -45,13 +46,6 @@ __FBSDID("$FreeBSD: head/bin/sh/mystring.c 270102 2014-08-17 16:40:29Z jilles $"
  *	number(s)		Convert a string of digits to an integer.
  *	is_number(s)		Return true if s is a string of digits.
  */
-
-#include <stdlib.h>
-#include "shell.h"
-#include "syntax.h"
-#include "error.h"
-#include "mystring.h"
-
 
 char nullstr[1];		/* zero length string */
 

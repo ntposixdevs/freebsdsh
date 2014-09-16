@@ -1,3 +1,4 @@
+/*	$FreeBSD: head/bin/sh/arith_yylex.c 254806 2013-08-24 20:06:00Z jilles $	*/
 /*-
  * Copyright (c) 2002
  *	Herbert Xu.
@@ -32,9 +33,7 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/arith_yylex.c 254806 2013-08-24 20:06:00Z jilles $");
-
+#include <sys/types.h>
 #include <inttypes.h>
 #include <stdlib.h>
 #include <string.h>

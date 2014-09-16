@@ -39,12 +39,12 @@ static char const copyright[] =
 #endif /* not lint */
 
 #ifndef lint
-static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
+/*	static char sccsid[] = "@(#)kill.c	8.4 (Berkeley) 4/28/95";
 #endif /* not lint */
 #endif
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/kill/kill.c 263206 2014-03-15 14:58:48Z jilles $");
+/*	$FreeBSD: head/bin/kill/kill.c 263206 2014-03-15 14:58:48Z jilles $	*/
 
+#include <sys/types.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>

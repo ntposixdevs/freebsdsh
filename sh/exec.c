@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/exec.c 268920 2014-07-20 12:06:52Z jilles $	*/
+/*	static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -29,14 +31,6 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/exec.c 268920 2014-07-20 12:06:52Z jilles $");
 
 #include <sys/types.h>
 #include <sys/stat.h>

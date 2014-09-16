@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/alias.c 263777 2014-03-26 20:43:40Z jilles $	*/
+/*	static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";	*/
 /*-
  * Copyright (c) 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)alias.c	8.3 (Berkeley) 5/4/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/alias.c 263777 2014-03-26 20:43:40Z jilles $");
-
+#include <sys/types.h>
 #include <stdlib.h>
 #include "shell.h"
 #include "output.h"

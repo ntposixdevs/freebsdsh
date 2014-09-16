@@ -37,18 +37,17 @@
  * $FreeBSD: head/bin/sh/nodes.c.pat 249235 2013-04-07 16:28:36Z jilles $
  */
 
-#include <sys/param.h>
+#include <sys/types.h>
 #include <stdlib.h>
 #include <stddef.h>
-/*
- * Routine for dealing with parsed shell commands.
- */
-
 #include "shell.h"
 #include "nodes.h"
 #include "memalloc.h"
 #include "mystring.h"
 
+/*
+ * Routine for dealing with parsed shell commands.
+ */
 
 static int     funcblocksize;	/* size of structures in function */
 static int     funcstringsize;	/* size of strings in node */

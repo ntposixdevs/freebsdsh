@@ -1,3 +1,5 @@
+/*	$FreeBSD: head/bin/sh/input.c 271593 2014-09-14 16:46:30Z jilles $	*/
+/*	static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -30,14 +32,7 @@
  * SUCH DAMAGE.
  */
 
-#ifndef lint
-#if 0
-static char sccsid[] = "@(#)input.c	8.3 (Berkeley) 6/9/95";
-#endif
-#endif /* not lint */
-#include <sys/cdefs.h>
-__FBSDID("$FreeBSD: head/bin/sh/input.c 271593 2014-09-14 16:46:30Z jilles $");
-
+#include <sys/types.h>
 #include <stdio.h>	/* defines BUFSIZ */
 #include <fcntl.h>
 #include <errno.h>
