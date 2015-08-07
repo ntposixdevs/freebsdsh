@@ -44,8 +44,8 @@
 
 struct synclass
 {
-	const char* name;
-	const char* comment;
+	const_cstring_t name;
+	const_cstring_t comment;
 };
 
 /* Syntax classes */
@@ -97,16 +97,16 @@ static FILE* hfile;
 
 static void add_default(void);
 static void finish(void);
-static void init(const char*);
-static void add(const char*, const char*);
+static void init(const_cstring_t);
+static void add(const_cstring_t, const_cstring_t);
 static void output_type_macros(void);
 
-int
-main(int argc /*__unused*/, char** argv /*__unused*/)
+int32_t
+main(int32_t argc /*__unused*/, cstring_t* argv /*__unused*/)
 {
-	int i;
+	int32_t i;
 	char buf[80];
-	int pos;
+	int32_t pos;
 	/* Create output files */
 	if ((cfile = fopen("syntax.c", "w")) == NULL)
 	{
@@ -219,7 +219,7 @@ main(int argc /*__unused*/, char** argv /*__unused*/)
  */
 
 static void
-init(const char* name)
+init(const_cstring_t name)
 {
 	fprintf(hfile, "extern const char %s[];\n", name);
 	fprintf(cfile, "const char %s[SYNBASE + CHAR_MAX + 1] = {\n", name);
@@ -227,7 +227,7 @@ init(const char* name)
 
 
 static void
-add_one(const char* key, const char* type)
+add_one(const_cstring_t key, const_cstring_t type)
 {
 	fprintf(cfile, "\t[SYNBASE + %s] = %s,\n", key, type);
 }
@@ -269,7 +269,7 @@ finish(void)
  */
 
 static void
-add(const char* p, const char* type)
+add(const_cstring_t p, const_cstring_t type)
 {
 	for (; *p; ++p)
 	{
@@ -302,14 +302,14 @@ add(const char* p, const char* type)
  * contiguous, we can test for them quickly.
  */
 
-static const char* macro[] =
+static const_cstring_t macro[] =
 {
-	"#define is_digit(c)\t((unsigned int)((c) - '0') <= 9)",
+	"#define is_digit(c)\t((uint32_t)((c) - '0') <= 9)",
 	"#define is_eof(c)\t((c) == PEOF)",
-	"#define is_alpha(c)\t((is_type+SYNBASE)[(int)c] & (ISUPPER|ISLOWER))",
-	"#define is_name(c)\t((is_type+SYNBASE)[(int)c] & (ISUPPER|ISLOWER|ISUNDER))",
-	"#define is_in_name(c)\t((is_type+SYNBASE)[(int)c] & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))",
-	"#define is_special(c)\t((is_type+SYNBASE)[(int)c] & (ISSPECL|ISDIGIT))",
+	"#define is_alpha(c)\t((is_type+SYNBASE)[(int32_t)c] & (ISUPPER|ISLOWER))",
+	"#define is_name(c)\t((is_type+SYNBASE)[(int32_t)c] & (ISUPPER|ISLOWER|ISUNDER))",
+	"#define is_in_name(c)\t((is_type+SYNBASE)[(int32_t)c] & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))",
+	"#define is_special(c)\t((is_type+SYNBASE)[(int32_t)c] & (ISSPECL|ISDIGIT))",
 	"#define digit_val(c)\t((c) - '0')",
 	NULL
 };
@@ -317,7 +317,7 @@ static const char* macro[] =
 static void
 output_type_macros(void)
 {
-	const char** pp;
+	const_cstring_t* pp;
 	for (pp = macro ; *pp ; pp++)
 		fprintf(hfile, "%s\n", *pp);
 }

@@ -36,7 +36,7 @@
 struct strlist
 {
 	struct strlist* next;
-	char* text;
+	cstring_t text;
 };
 
 
@@ -59,6 +59,6 @@ struct arglist
 
 
 union node;
-void expandarg(union node*, struct arglist*, int);
-void rmescapes(char*);
-int casematch(union node*, const char*);
+void expandarg(union node*, struct arglist*, int32_t);
+void rmescapes(cstring_t);
+int32_t casematch(union node*, const_cstring_t);

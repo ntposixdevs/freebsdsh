@@ -71,14 +71,14 @@
  * must be distinct from NULL.
  */
 #define NEOF ((union node *)-1)
-extern int whichprompt;		/* 1 == PS1, 2 == PS2 */
-extern const char* const parsekwd[];
+extern int32_t whichprompt;		/* 1 == PS1, 2 == PS2 */
+extern const_cstring_t const parsekwd[];
 
 
-union node* parsecmd(int);
+union node* parsecmd(int32_t);
 void forcealias(void);
-void fixredir(union node*, const char*, int);
-int goodname(const char*);
-int isassignment(const char*);
-char* getprompt(void*);
-const char* expandstr(const char*);
+void fixredir(union node*, const_cstring_t, int32_t);
+int32_t goodname(const_cstring_t);
+int32_t isassignment(const_cstring_t);
+cstring_t getprompt(pvoid_t);
+const_cstring_t expandstr(const_cstring_t);

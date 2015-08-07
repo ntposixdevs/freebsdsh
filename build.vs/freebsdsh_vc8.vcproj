@@ -26,10 +26,11 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
+			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)\"
 			ConfigurationType="1"
 			InheritedPropertySheets=".\freebsdsh.vsprops"
+			CharacterSet="1"
 			WholeProgramOptimization="0"
 			>
 			<Tool
@@ -139,10 +140,11 @@
 		</Configuration>
 		<Configuration
 			Name="Debug|x64"
-			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
+			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)\"
 			ConfigurationType="1"
 			InheritedPropertySheets=".\freebsdsh.vsprops"
+			CharacterSet="1"
 			WholeProgramOptimization="0"
 			>
 			<Tool
@@ -252,10 +254,11 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
+			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)\"
 			ConfigurationType="1"
 			InheritedPropertySheets=".\freebsdsh.vsprops"
+			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -369,10 +372,11 @@
 		</Configuration>
 		<Configuration
 			Name="Release|x64"
-			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)"
-			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)"
+			OutputDirectory="..\bin\$(PlatformName)_$(ConfigurationName)\"
+			IntermediateDirectory="$(TEMP)\$(SolutionName)\$(ProjectName)\$(PlatformName)_$(ConfigurationName)\"
 			ConfigurationType="1"
 			InheritedPropertySheets=".\freebsdsh.vsprops"
+			CharacterSet="1"
 			WholeProgramOptimization="1"
 			>
 			<Tool
@@ -500,10 +504,74 @@
 				<File
 					RelativePath="..\sh\mknodes.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|x64"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
 				</File>
 				<File
 					RelativePath="..\sh\mksyntax.c"
 					>
+					<FileConfiguration
+						Name="Debug|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Debug|x64"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|x64"
+						ExcludedFromBuild="true"
+						>
+						<Tool
+							Name="VCCLCompilerTool"
+						/>
+					</FileConfiguration>
 				</File>
 			</Filter>
 			<Filter
@@ -515,10 +583,6 @@
 				</File>
 				<File
 					RelativePath="..\sh\cd.c"
-					>
-				</File>
-				<File
-					RelativePath="..\sh\error.c"
 					>
 				</File>
 				<File
@@ -579,6 +643,10 @@
 				</File>
 				<File
 					RelativePath="..\sh\redir.c"
+					>
+				</File>
+				<File
+					RelativePath="..\sh\sherror.c"
 					>
 				</File>
 				<File
@@ -684,10 +752,6 @@
 					>
 				</File>
 				<File
-					RelativePath="..\sh\error.h"
-					>
-				</File>
-				<File
 					RelativePath="..\sh\eval.h"
 					>
 				</File>
@@ -745,6 +809,10 @@
 				</File>
 				<File
 					RelativePath="..\sh\shell.h"
+					>
+				</File>
+				<File
+					RelativePath="..\sh\sherror.h"
 					>
 				</File>
 				<File

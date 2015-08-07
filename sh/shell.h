@@ -38,6 +38,39 @@
 
 #include <inttypes.h>
 
+/* local typedef of abstract string type. Using wide characters for UTF16 */
+typedef unsigned short				char16_t;
+typedef unsigned int				char32_t;
+typedef const unsigned short		const_char16_t;
+typedef const unsigned int			const_char32_t;
+typedef char						cchar_t;
+typedef char*   					cstring_t;
+typedef const char* 				const_cstring_t;
+typedef const char* __restrict  	const_cstring_t_restrict;
+typedef void*						pvoid_t;
+typedef const void*					const_pvoid_t;
+typedef int32_t						status_t;
+typedef uint8_t						boolean_t;
+
+typedef union unionchar
+{
+	char32_t	char32;
+	char16_t	char16[sizeof(char32_t)/sizeof(char16_t)];
+	wchar_t		wchar[sizeof(char32_t)/sizeof(wchar_t)];
+	uint8_t 	uint8[sizeof(char32_t)/sizeof(uint8_t)];
+	int8_t  	int8[sizeof(char32_t)/sizeof(int8_t)];
+} unionchar_t;
+
+LIBC_IMPEXP1 cstring_t __cdecl _tcschr(_In_z_ const_cstring_t str,_In_ int32_t c);
+LIBC_IMPEXP1 int32_t __cdecl _tcscmp(_In_z_ const_cstring_t str1,_In_z_ const_cstring_t str2) __attribute__((nonnull(1,2),__warn_unused_result__));
+LIBC_IMPEXP1 int32_t __cdecl _tcsncmp(_In_reads_or_z_(nchars) const_cstring_t str1,_In_reads_or_z_(nchars) const_cstring_t str2,_In_ size_t nchars) __attribute__((nonnull(1,2),__warn_unused_result__));
+//PSXDLL_IMPEXP int32_t __cdecl _tstat(_In_z_ const_cstring_t_restrict path,_Out_ stat_t* __restrict pstat) __attribute__((nonnull(1,2)));
+LIBC_IMPEXP1 cstring_t __cdecl _tcsstr(_In_z_ const_cstring_t str,_In_z_ const_cstring_t find);
+LIBC_IMPEXP2 cstring_t __cdecl _tcsdup(__in_z_opt const_cstring_t str);
+LIBC_IMPEXP cstring_t __cdecl _tcsndup(__in_z_opt const_cstring_t str,_In_ size_t nelem);
+
+
+
 /*
  * The follow should be set to reflect the type of system you have:
  *	JOBS -> 1 if you have Berkeley job control, 0 otherwise.
@@ -62,7 +95,7 @@ typedef intmax_t arith_t;
 #define	ARITH_MIN INTMAX_MIN
 #define	ARITH_MAX INTMAX_MAX
 
-typedef void* pointer;
+typedef void* pvoid_t;
 
 #include <sys/cdefs.h>
 

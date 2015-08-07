@@ -61,7 +61,7 @@
 #include "trap.h"
 #include "var.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "show.h"
 #include "mystring.h"
 #ifndef NO_HISTORY
@@ -69,29 +69,29 @@
 #endif
 
 
-int evalskip;			/* set if we are skipping commands */
-int skipcount;			/* number of levels to skip */
-static int loopnest;		/* current loop nesting level */
-int funcnest;			/* depth of function calls */
-static int builtin_flags;	/* evalcommand flags for builtins */
+int32_t evalskip;			/* set if we are skipping commands */
+int32_t skipcount;			/* number of levels to skip */
+static int32_t loopnest;		/* current loop nesting level */
+int32_t funcnest;			/* depth of function calls */
+static int32_t builtin_flags;	/* evalcommand flags for builtins */
 
 
-char* commandname;
+cstring_t commandname;
 struct strlist* cmdenviron;
-int exitstatus;			/* exit status of last command */
-int oexitstatus;		/* saved exit status */
+int32_t exitstatus;			/* exit status of last command */
+int32_t oexitstatus;		/* saved exit status */
 
 
-static void evalloop(union node*, int);
-static void evalfor(union node*, int);
+static void evalloop(union node*, int32_t);
+static void evalfor(union node*, int32_t);
 static union node* evalcase(union node*);
-static void evalsubshell(union node*, int);
-static void evalredir(union node*, int);
+static void evalsubshell(union node*, int32_t);
+static void evalredir(union node*, int32_t);
 static void exphere(union node*, struct arglist*);
 static void expredir(union node*);
 static void evalpipe(union node*);
-static int is_valid_fast_cmdsubst(union node* n);
-static void evalcommand(union node*, int, struct backcmd*);
+static int32_t is_valid_fast_cmdsubst(union node* n);
+static void evalcommand(union node* cmd, uint32_t flags, pbackcmd_t backcmd);
 static void prehash(union node*);
 
 
@@ -111,12 +111,12 @@ reseteval(void)
  * The eval command.
  */
 
-int
-evalcmd(int argc, char** argv)
+int32_t
+evalcmd(int32_t argc, cstring_t* argv)
 {
-	char* p;
-	char* concat;
-	char** ap;
+	cstring_t p;
+	cstring_t concat;
+	cstring_t* ap;
 	if (argc > 1)
 	{
 		p = argv[1];
@@ -147,12 +147,12 @@ evalcmd(int argc, char** argv)
  */
 
 void
-evalstring(char* s, int flags)
+evalstring(cstring_t s, int32_t flags)
 {
 	union node* n;
 	struct stackmark smark;
-	int flags_exit;
-	int any;
+	int32_t flags_exit;
+	int32_t any;
 	flags_exit = flags & EV_EXIT;
 	flags &= ~EV_EXIT;
 	any = 0;
@@ -186,9 +186,9 @@ evalstring(char* s, int flags)
  */
 
 void
-evaltree(union node* n, int flags)
+evaltree(union node* n, int32_t flags)
 {
-	int do_etest;
+	int32_t do_etest;
 	union node* next;
 	struct stackmark smark;
 	setstackmark(&smark);
@@ -205,7 +205,7 @@ evaltree(union node* n, int flags)
 #ifndef NO_HISTORY
 		displayhist = 1;	/* show history substitutions done with fc */
 #endif
-		TRACE(("evaltree(%p: %d) called\n", (void*)n, n->type));
+		TRACE(("evaltree(%p: %d) called\n", (pvoid_t)n, n->type));
 		switch (n->type)
 		{
 			case NSEMI:
@@ -288,7 +288,7 @@ evaltree(union node* n, int flags)
 				do_etest = !(flags & EV_TESTED);
 				break;
 			case NCMD:
-				evalcommand(n, flags, (struct backcmd*)NULL);
+				evalcommand(n, flags, (pbackcmd_t)NULL);
 				do_etest = !(flags & EV_TESTED);
 				break;
 			default:
@@ -313,9 +313,9 @@ out:
 
 
 static void
-evalloop(union node* n, int flags)
+evalloop(union node* n, int32_t flags)
 {
-	int status;
+	int32_t status;
 	loopnest++;
 	status = 0;
 	for (;;)
@@ -357,12 +357,12 @@ skipping:
 
 
 static void
-evalfor(union node* n, int flags)
+evalfor(union node* n, int32_t flags)
 {
 	struct arglist arglist;
 	union node* argp;
 	struct strlist* sp;
-	int status;
+	int32_t status;
 	arglist.lastp = &arglist.list;
 	for (argp = n->nfor.args ; argp ; argp = argp->narg.next)
 	{
@@ -439,10 +439,10 @@ static union node*
  */
 
 static void
-evalsubshell(union node* n, int flags)
+evalsubshell(union node* n, int32_t flags)
 {
 	struct job* jp;
-	int backgnd = (n->type == NBACKGND);
+	int32_t backgnd = (n->type == NBACKGND);
 	oexitstatus = exitstatus;
 	expredir(n->nredir.redirect);
 	if ((!backgnd && flags & EV_EXIT && !have_traps()) ||
@@ -456,7 +456,7 @@ evalsubshell(union node* n, int flags)
 	else if (! backgnd)
 	{
 		INTOFF;
-		exitstatus = waitforjob(jp, (int*)NULL);
+		exitstatus = waitforjob(jp, (int32_t*)NULL);
 		INTON;
 	}
 	else
@@ -469,17 +469,17 @@ evalsubshell(union node* n, int flags)
  */
 
 static void
-evalredir(union node* n, int flags)
+evalredir(union node* n, int32_t flags)
 {
 	struct jmploc jmploc;
 	struct jmploc* savehandler;
-	volatile int in_redirect = 1;
+	volatile int32_t in_redirect = 1;
 	oexitstatus = exitstatus;
 	expredir(n->nredir.redirect);
 	savehandler = handler;
 	if (setjmp(jmploc.loc))
 	{
-		int e;
+		int32_t e;
 		handler = savehandler;
 		e = exception;
 		popredir();
@@ -515,7 +515,7 @@ exphere(union node* redir, struct arglist* fn)
 	struct jmploc jmploc;
 	struct jmploc* savehandler;
 	struct localvar* savelocalvars;
-	int need_longjmp = 0;
+	int32_t need_longjmp = 0;
 	redir->nhere.expdoc = nullstr;
 	savelocalvars = localvars;
 	localvars = NULL;
@@ -591,10 +591,10 @@ evalpipe(union node* n)
 {
 	struct job* jp;
 	struct nodelist* lp;
-	int pipelen;
-	int prevfd;
-	int pip[2];
-	TRACE(("evalpipe(%p) called\n", (void*)n));
+	int32_t pipelen;
+	int32_t prevfd;
+	int32_t pip[2];
+	TRACE(("evalpipe(%p) called\n", (pvoid_t)n));
 	pipelen = 0;
 	for (lp = n->npipe.cmdlist ; lp ; lp = lp->next)
 		pipelen++;
@@ -611,7 +611,7 @@ evalpipe(union node* n)
 			{
 				if (prevfd >= 0)
 					close(prevfd);
-				error("Pipe call failed: %s", strerror(errno));
+				sherror("Pipe call failed: %s", strerror(errno));
 			}
 		}
 		if (forkshell(jp, lp->n, n->npipe.backgnd) == 0)
@@ -644,7 +644,7 @@ evalpipe(union node* n)
 	if (n->npipe.backgnd == 0)
 	{
 		INTOFF;
-		exitstatus = waitforjob(jp, (int*)NULL);
+		exitstatus = waitforjob(jp, (int32_t*)NULL);
 		TRACE(("evalpipe:  job done exit status %d\n", exitstatus));
 		INTON;
 	}
@@ -654,7 +654,7 @@ evalpipe(union node* n)
 
 
 
-static int
+static int32_t
 is_valid_fast_cmdsubst(union node* n)
 {
 	return (n->type == NCMD);
@@ -668,14 +668,15 @@ is_valid_fast_cmdsubst(union node* n)
  */
 
 void
-evalbackcmd(union node* n, struct backcmd* result)
+evalbackcmd(union node* n, pbackcmd_t result)
 {
-	int pip[2];
+	int32_t pip[2] = {0};
 	struct job* jp;
 	struct stackmark smark;
 	struct jmploc jmploc;
 	struct jmploc* savehandler;
 	struct localvar* savelocalvars;
+
 	setstackmark(&smark);
 	result->fd = -1;
 	result->buf = NULL;
@@ -718,8 +719,8 @@ evalbackcmd(union node* n, struct backcmd* result)
 	}
 	else
 	{
-		if (pipe(pip) < 0)
-			error("Pipe call failed: %s", strerror(errno));
+		if (pipe((int32_t*)pip) < 0)
+			sherror("Pipe call failed: %s", strerror(errno));
 		jp = makejob(n, 1);
 		if (forkshell(jp, n, FORK_NOJOB) == 0)
 		{
@@ -742,8 +743,8 @@ out:
 		   result->fd, result->buf, result->nleft, result->jp));
 }
 
-static int
-mustexpandto(const char* argtext, const char* mask)
+static int32_t
+mustexpandto(const_cstring_t argtext, const_cstring_t mask)
 {
 	for (;;)
 	{
@@ -754,7 +755,7 @@ mustexpandto(const char* argtext, const char* mask)
 		}
 		if (*argtext == CTLESC)
 			argtext++;
-		else if (BASESYNTAX[(int)*argtext] == CCTL)
+		else if (BASESYNTAX[(int32_t)*argtext] == CCTL)
 			return (0);
 		if (*argtext != *mask)
 			return (0);
@@ -765,10 +766,10 @@ mustexpandto(const char* argtext, const char* mask)
 	}
 }
 
-static int
+static int32_t
 isdeclarationcmd(struct narg* arg)
 {
-	int have_command = 0;
+	int32_t have_command = 0;
 	if (arg == NULL)
 		return (0);
 	while (mustexpandto(arg->text, "command"))
@@ -794,8 +795,9 @@ static void
 xtracecommand(struct arglist* varlist, struct arglist* arglist)
 {
 	struct strlist* sp;
-	char sep = 0;
-	const char* p, *ps4;
+	char32_t sep = 0;
+	const_cstring_t p;
+	const_cstring_t ps4;
 	ps4 = expandstr(ps4val());
 	out2str(ps4 != NULL ? ps4 : ps4val());
 	for (sp = varlist->list ; sp ; sp = sp->next)
@@ -841,8 +843,8 @@ xtracecommand(struct arglist* varlist, struct arglist* arglist)
  * available in a child process; this is deliberate.
  * The arguments should already have been expanded.
  */
-static int
-safe_builtin(int idx, int argc, char** argv)
+static int32_t
+safe_builtin(int32_t idx, int32_t argc, cstring_t* argv)
 {
 	if (idx == BLTINCMD || idx == COMMANDCMD || idx == ECHOCMD ||
 			idx == FALSECMD || idx == JOBIDCMD || idx == JOBSCMD ||
@@ -866,33 +868,34 @@ safe_builtin(int idx, int argc, char** argv)
  */
 
 static void
-evalcommand(union node* cmd, int flags, struct backcmd* backcmd)
+evalcommand(union node* cmd, uint32_t flags, pbackcmd_t backcmd)
 {
 	union node* argp;
 	struct arglist arglist;
 	struct arglist varlist;
-	char** argv;
-	int argc;
-	char** envp;
-	int varflag;
+	cstring_t* argv;
+	int32_t argc;
+	cstring_t* envp;
+	int32_t varflag;
 	struct strlist* sp;
-	int mode;
-	int pip[2];
+	int32_t mode;
+	int32_t pip[2] = {0};
 	struct cmdentry cmdentry;
 	struct job* jp;
 	struct jmploc jmploc;
 	struct jmploc* savehandler;
-	char* savecmdname;
+	cstring_t savecmdname;
 	struct shparam saveparam;
 	struct localvar* savelocalvars;
 	struct parsefile* savetopfile;
-	volatile int e;
-	char* lastarg;
-	int realstatus;
-	int do_clearcmdentry;
-	const char* path = pathval();
+	volatile int32_t e;
+	cstring_t lastarg;
+	int32_t realstatus;
+	int32_t do_clearcmdentry;
+	const_cstring_t path = pathval();
+
 	/* First expand the arguments. */
-	TRACE(("evalcommand(%p, %d) called\n", (void*)cmd, flags));
+	TRACE(("evalcommand(%p, %d) called\n", (pvoid_t)cmd, flags));
 	arglist.lastp = &arglist.list;
 	varlist.lastp = &varlist.list;
 	varflag = 1;
@@ -919,7 +922,7 @@ evalcommand(union node* cmd, int flags, struct backcmd* backcmd)
 	for (sp = arglist.list ; sp ; sp = sp->next)
 		argc++;
 	/* Add one slot at the beginning for tryexec(). */
-	argv = stalloc(sizeof(char*) * (argc + 2));
+	argv = stalloc(sizeof(cstring_t) * (argc + 2));
 	argv++;
 	for (sp = arglist.list ; sp ; sp = sp->next)
 	{
@@ -945,7 +948,7 @@ evalcommand(union node* cmd, int flags, struct backcmd* backcmd)
 	else
 	{
 		static const char PATH[] = "PATH=";
-		int cmd_flags = 0, bltinonly = 0;
+		int32_t cmd_flags = 0, bltinonly = 0;
 		/*
 		 * Modify the command lookup path, if a PATH= assignment
 		 * is present
@@ -1067,7 +1070,7 @@ evalcommand(union node* cmd, int flags, struct backcmd* backcmd)
 		{
 			mode = FORK_NOJOB;
 			if (pipe(pip) < 0)
-				error("Pipe call failed: %s", strerror(errno));
+				sherror("Pipe call failed: %s", strerror(errno));
 		}
 		if (cmdentry.cmdtype == CMDNORMAL &&
 				cmd->ncmd.redirect == NULL &&
@@ -1303,8 +1306,8 @@ prehash(union node* n)
  * with an invalid name.
  */
 
-int
-bltincmd(int argc, char** argv)
+int32_t
+bltincmd(int32_t argc, cstring_t* argv)
 {
 	if (argc > 1)
 	{
@@ -1330,17 +1333,17 @@ bltincmd(int argc, char** argv)
  * in the standard shell so we don't make it one here.
  */
 
-int
-breakcmd(int argc, char** argv)
+int32_t
+breakcmd(int32_t argc, cstring_t* argv)
 {
-	long n;
-	char* end;
+	intptr_t n;
+	cstring_t end;
 	if (argc > 1)
 	{
 		/* Allow arbitrarily large numbers. */
-		n = strtol(argv[1], &end, 10);
+		n = (intptr_t)strtol(argv[1], &end, 10);
 		if (!is_digit(argv[1][0]) || *end != '\0')
-			error("Illegal number: %s", argv[1]);
+			sherror("Illegal number: %s", argv[1]);
 	}
 	else
 		n = 1;
@@ -1357,12 +1360,14 @@ breakcmd(int argc, char** argv)
 /*
  * The `command' command.
  */
-int
-commandcmd(int argc __unused, char** argv __unused)
+int32_t
+commandcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	const char* path;
-	int ch;
-	int cmd = -1;
+	const_cstring_t path;
+	int32_t ch;
+	int32_t cmd = -1;
+	(void)argc; (void)argv;
+
 	path = bltinlookup("PATH", 1);
 	while ((ch = nextopt("pvV")) != '\0')
 	{
@@ -1382,11 +1387,11 @@ commandcmd(int argc __unused, char** argv __unused)
 	if (cmd != -1)
 	{
 		if (*argptr == NULL || argptr[1] != NULL)
-			error("wrong number of arguments");
+			sherror("wrong number of arguments");
 		return typecmd_impl(2, argptr - 1, cmd, path);
 	}
 	if (*argptr != NULL)
-		error("commandcmd bad call");
+		sherror("commandcmd bad call");
 	/*
 	 * Do nothing successfully if no command was specified;
 	 * ksh also does this.
@@ -1399,32 +1404,34 @@ commandcmd(int argc __unused, char** argv __unused)
  * The return command.
  */
 
-int
-returncmd(int argc, char** argv)
+int32_t
+returncmd(int32_t argc, cstring_t* argv)
 {
-	int ret = argc > 1 ? number(argv[1]) : oexitstatus;
+	int32_t ret = argc > 1 ? number(argv[1]) : oexitstatus;
 	evalskip = SKIPRETURN;
 	skipcount = 1;
 	return ret;
 }
 
 
-int
-falsecmd(int argc __unused, char** argv __unused)
+int32_t
+falsecmd(int32_t argc __unused, cstring_t* argv __unused)
 {
+	(void)argc; (void)argv;
 	return 1;
 }
 
 
-int
-truecmd(int argc __unused, char** argv __unused)
+int32_t
+truecmd(int32_t argc __unused, cstring_t* argv __unused)
 {
+	(void)argc; (void)argv;
 	return 0;
 }
 
 
-int
-execcmd(int argc, char** argv)
+int32_t
+execcmd(int32_t argc, cstring_t* argv)
 {
 	/*
 	 * Because we have historically not supported any options,
@@ -1446,12 +1453,14 @@ execcmd(int argc, char** argv)
 }
 
 
-int
-timescmd(int argc __unused, char** argv __unused)
+int32_t
+timescmd(int32_t argc __unused, cstring_t* argv __unused)
 {
 	struct rusage ru;
-	long shumins, shsmins, chumins, chsmins;
+	time_t shumins, shsmins, chumins, chsmins;
 	double shusecs, shssecs, chusecs, chssecs;
+	(void)argc; (void)argv;
+
 	if (getrusage(RUSAGE_SELF, &ru) < 0)
 		return 1;
 	shumins = ru.ru_utime.tv_sec / 60;

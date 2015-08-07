@@ -29,4 +29,4 @@
  * $FreeBSD: head/bin/sh/cd.h 223060 2011-06-13 21:03:27Z jilles $
  */
 
-void	 pwd_init(int);
+void	 pwd_init(int32_t);

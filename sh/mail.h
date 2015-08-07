@@ -33,4 +33,4 @@
  * $FreeBSD: head/bin/sh/mail.h 127958 2004-04-06 20:06:54Z markm $
  */
 
-void chkmail(int);
+void chkmail(int32_t);

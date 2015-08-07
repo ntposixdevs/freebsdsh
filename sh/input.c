@@ -51,20 +51,20 @@
 #include "output.h"
 #include "options.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "alias.h"
 #include "parser.h"
 #include "myhistedit.h"
 #include "trap.h"
 
-#define EOF_NLEFT -99		/* value of parsenleft when EOF pushed back */
+#define EOF_NLEFT SIZE_MAX		/* -99 value of parsenleft when EOF pushed back */
 
 struct strpush
 {
 	struct strpush* prev;	/* preceding string on stack */
-	const char* prevstring;
-	int prevnleft;
-	int prevlleft;
+	const_cstring_t prevstring;
+	size_t prevnleft;
+	size_t prevlleft;
 	struct alias* ap;	/* if push was associated with an alias */
 };
 
@@ -76,21 +76,21 @@ struct strpush
 struct parsefile
 {
 	struct parsefile* prev;	/* preceding file on stack */
-	int linno;		/* current line */
-	int fd;			/* file descriptor (or -1 if string) */
-	int nleft;		/* number of chars left in this line */
-	int lleft;		/* number of lines left in this buffer */
-	const char* nextc;	/* next char in buffer */
-	char* buf;		/* input buffer */
+	int32_t linno;		/* current line */
+	int32_t fd;			/* file descriptor (or -1 if string) */
+	size_t nleft;		/* number of chars left in this line */
+	size_t lleft;		/* number of lines left in this buffer */
+	const_cstring_t nextc;	/* next char in buffer */
+	cstring_t buf;		/* input buffer */
 	struct strpush* strpush; /* for pushing strings at this level */
 	struct strpush basestrpush; /* so pushing one is fast */
 };
 
 
-int plinno = 1;			/* input line number */
-int parsenleft;			/* copy of parsefile->nleft */
-static int parselleft;		/* copy of parsefile->lleft */
-const char* parsenextc;		/* copy of parsefile->nextc */
+int32_t plinno = 1;			/* input line number */
+size_t parsenleft;			/* copy of parsefile->nleft */
+static size_t parselleft;		/* copy of parsefile->lleft */
+const_cstring_t parsenextc;		/* copy of parsefile->nextc */
 static char basebuf[BUFSIZ + 1];/* buffer for top level input file */
 static struct parsefile basepf =  	/* top level input file */
 {
@@ -98,12 +98,12 @@ static struct parsefile basepf =  	/* top level input file */
 	.buf = basebuf
 };
 static struct parsefile* parsefile = &basepf;	/* current input file */
-int whichprompt;		/* 1 == PS1, 2 == PS2 */
+int32_t whichprompt;		/* 1 == PS1, 2 == PS2 */
 
 EditLine* el;			/* cookie for editline package */
 
 static void pushfile(void);
-static int preadfd(void);
+static ssize_t preadfd(void);
 static void popstring(void);
 
 void
@@ -120,24 +120,29 @@ resetinput(void)
  * Nul characters in the input are silently discarded.
  */
 
-int
+int32_t
 pgetc(void)
 {
-	return pgetc_macro();
+	// #define pgetc_macro()	(--parsenleft >= 0? *parsenextc++ : preadbuffer())
+	if (parsenleft > 0)
+	{
+		--parsenleft;
+		return *parsenextc++;
+	}
+	return preadbuffer();
 }
 
 
-static int
+static ssize_t
 preadfd(void)
 {
-	int nr;
+	ssize_t nr;
 	parsenextc = parsefile->buf;
 retry:
-#ifndef NO_HISTORY
 	if (parsefile->fd == 0 && el)
 	{
-		static const char* rl_cp;
-		static int el_len;
+		static const_cstring_t rl_cp;
+		static ssize_t el_len;
 		if (rl_cp == NULL)
 		{
 			el_resize(el);
@@ -161,7 +166,6 @@ retry:
 		}
 	}
 	else
-#endif
 		nr = read(parsefile->fd, parsefile->buf, BUFSIZ);
 	if (nr <= 0)
 	{
@@ -171,7 +175,7 @@ retry:
 				goto retry;
 			if (parsefile->fd == 0 && errno == EWOULDBLOCK)
 			{
-				int flags = fcntl(0, F_GETFL, 0);
+				int32_t flags = fcntl(0, F_GETFL, 0);
 				if (flags >= 0 && flags & O_NONBLOCK)
 				{
 					flags &= ~ O_NONBLOCK;
@@ -197,13 +201,15 @@ retry:
  * 3) If there is more in this buffer, use it else call read to fill it.
  * 4) Process input up to the next newline, deleting nul characters.
  */
-
-int
+int32_t
 preadbuffer(void)
 {
-	char* p, *q;
-	int more;
+	cstring_t p;
+	cstring_t q;
+	int32_t more;
 	char savec;
+
+/* !!!! NOTE: This code needs to be reimplemented !!!! */
 	while (parsefile->strpush)
 	{
 		/*
@@ -211,11 +217,14 @@ preadbuffer(void)
 		 * alias remains in use while parsing its last word.
 		 * This avoids alias recursions.
 		 */
-		if (parsenleft == -1 && parsefile->strpush->ap != NULL)
+		if (parsenleft == 0 /*-1*/ && parsefile->strpush->ap != NULL)
 			return ' ';
 		popstring();
-		if (--parsenleft >= 0)
+		if (parsenleft > 0)
+		{
+			--parsenleft;
 			return (*parsenextc++);
+		}
 	}
 	if (parsenleft == EOF_NLEFT || parsefile->buf == NULL)
 		return PEOF;
@@ -240,7 +249,7 @@ again:
 				p++;	/* Skip nul */
 				goto check;
 			case '\n':
-				parsenleft = q - parsenextc;
+				parsenleft = (q - parsenextc);
 				more = 0; /* Stop processing here */
 				break;
 			default:
@@ -250,7 +259,7 @@ again:
 check:
 		if (--parselleft <= 0)
 		{
-			parsenleft = q - parsenextc - 1;
+			parsenleft = (q - parsenextc - 1);
 			if (parsenleft < 0)
 				goto again;
 			*q = '\0';
@@ -259,7 +268,7 @@ check:
 	}
 	savec = *q;
 	*q = '\0';
-#ifndef NO_HISTORY
+
 	if (parsefile->fd == 0 && hist &&
 			parsenextc[strspn(parsenextc, " \t\n")] != '\0')
 	{
@@ -269,7 +278,7 @@ check:
 				parsenextc);
 		INTON;
 	}
-#endif
+
 	if (vflag)
 	{
 		out2str(parsenextc);
@@ -284,7 +293,7 @@ check:
  * to be read from the outside world.
  */
 
-int
+int32_t
 preadateof(void)
 {
 	if (parsenleft > 0)
@@ -313,7 +322,7 @@ pungetc(void)
  * We handle aliases this way.
  */
 void
-pushstring(const char* s, int len, struct alias* ap)
+pushstring(const_cstring_t s, size_t len, struct alias* ap)
 {
 	struct strpush* sp;
 	INTOFF;
@@ -365,19 +374,19 @@ popstring(void)
  */
 
 void
-setinputfile(const char* fname, int push)
+setinputfile(const_cstring_t fname, int32_t push)
 {
-	int fd;
-	int fd2;
+	int32_t fd;
+	int32_t fd2;
 	INTOFF;
-	if ((fd = open(fname, O_RDONLY | O_CLOEXEC)) < 0)
-		error("cannot open %s: %s", fname, strerror(errno));
+	if ((fd = open(fname, O_RDONLY/* | O_CLOEXEC*/)) < 0)
+		sherror("cannot open %s: %s", fname, strerror(errno));
 	if (fd < 10)
 	{
-		fd2 = fcntl(fd, F_DUPFD_CLOEXEC, 10);
+		fd2 = fcntl(fd, F_DUPFD /*F_DUPFD_CLOEXEC*/, 10);
 		close(fd);
 		if (fd2 < 0)
-			error("Out of file descriptors");
+			sherror("Out of file descriptors");
 		fd = fd2;
 	}
 	setinputfd(fd, push);
@@ -391,7 +400,7 @@ setinputfile(const char* fname, int push)
  */
 
 void
-setinputfd(int fd, int push)
+setinputfd(int32_t fd, int32_t push)
 {
 	if (push)
 	{
@@ -413,7 +422,7 @@ setinputfd(int fd, int push)
  */
 
 void
-setinputstring(const char* string, int push)
+setinputstring(const_cstring_t string, int32_t push)
 {
 	INTOFF;
 	if (push)
@@ -493,7 +502,7 @@ popfilesupto(struct parsefile* file)
 	while (parsefile != file && parsefile != &basepf)
 		popfile();
 	if (parsefile != file)
-		error("popfilesupto() misused");
+		sherror("popfilesupto() misused");
 }
 
 /*

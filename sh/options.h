@@ -35,12 +35,12 @@
 
 struct shparam
 {
-	int nparam;		/* # of positional parameters (without $0) */
-	unsigned char malloc;	/* if parameter list dynamically allocated */
-	unsigned char reset;	/* if getopts has been reset */
-	char** p;		/* parameter list */
-	char** optnext;		/* next parameter to be processed by getopts */
-	char* optptr;		/* used by getopts */
+	int32_t nparam;		/* # of positional parameters (without $0) */
+	uint8_t malloc;	/* if parameter list dynamically allocated */
+	uint8_t reset;	/* if getopts has been reset */
+	cstring_t* p;		/* parameter list */
+	cstring_t* optnext;		/* next parameter to be processed by getopts */
+	cstring_t optptr;		/* used by getopts */
 };
 
 
@@ -69,7 +69,7 @@ struct shparam
 
 struct optent
 {
-	const char* name;
+	const_cstring_t name;
 	const char letter;
 	char val;
 };
@@ -102,16 +102,16 @@ extern struct optent optlist[NOPTS];
 #endif
 
 
-extern char* minusc;		/* argument to -c option */
-extern char* arg0;		/* $0 */
+extern cstring_t minusc;		/* argument to -c option */
+extern cstring_t arg0;		/* $0 */
 extern struct shparam shellparam;  /* $@ */
-extern char** argptr;		/* argument list for builtin commands */
-extern char* shoptarg;		/* set by nextopt */
-extern char* nextopt_optptr;	/* used by nextopt */
+extern cstring_t* argptr;		/* argument list for builtin commands */
+extern cstring_t shoptarg;		/* set by nextopt */
+extern cstring_t nextopt_optptr;	/* used by nextopt */
 
-void procargs(int, char**);
+void procargs(int32_t, cstring_t*);
 void optschanged(void);
-void setparam(char**);
+void setparam(cstring_t*);
 void freeparam(struct shparam*);
-int nextopt(const char*);
-void getoptsreset(const char*);
+int32_t nextopt(const_cstring_t);
+void getoptsreset(const_cstring_t);

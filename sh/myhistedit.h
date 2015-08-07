@@ -34,9 +34,9 @@
 
 extern History* hist;
 extern EditLine* el;
-extern int displayhist;
+extern int32_t displayhist;
 
 void histedit(void);
-void sethistsize(const char*);
-void setterm(const char*);
+void sethistsize(const_cstring_t);
+void setterm(const_cstring_t);
 

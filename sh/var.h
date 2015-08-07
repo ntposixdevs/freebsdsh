@@ -52,10 +52,10 @@
 struct var
 {
 	struct var* next;		/* next entry in hash list */
-	int flags;			/* flags are defined above */
-	int name_len;			/* length of name */
-	char* text;			/* name=value */
-	void (*func)(const char*);
+	int32_t flags;			/* flags are defined above */
+	int32_t name_len;			/* length of name */
+	cstring_t text;			/* name=value */
+	void (*func)(const_cstring_t);
 	/* function to be called when  */
 	/* the variable gets set/unset */
 };
@@ -65,13 +65,13 @@ struct localvar
 {
 	struct localvar* next;		/* next local variable in list */
 	struct var* vp;			/* the variable that was made local */
-	int flags;			/* saved flags */
-	char* text;			/* saved text */
+	int32_t flags;			/* saved flags */
+	cstring_t text;			/* saved text */
 };
 
 
 struct localvar* localvars;
-extern int forcelocal;
+extern int32_t forcelocal;
 
 extern struct var vifs;
 extern struct var vmail;
@@ -86,9 +86,9 @@ extern struct var vhistsize;
 extern struct var vterm;
 #endif
 
-extern int localeisutf8;
+extern int32_t localeisutf8;
 /* The parser uses the locale that was in effect at startup. */
-extern int initial_localeisutf8;
+extern int32_t initial_localeisutf8;
 
 /*
  * The following macros access the values of the above variables.
@@ -114,19 +114,19 @@ extern int initial_localeisutf8;
 #define disvforkset()	((vdisvfork.flags & VUNSET) == 0)
 
 void initvar(void);
-void setvar(const char*, const char*, int);
-void setvareq(char*, int);
+void setvar(const_cstring_t, const_cstring_t, int32_t);
+void setvareq(cstring_t, int32_t);
 struct strlist;
-void listsetvar(struct strlist*, int);
-char* lookupvar(const char*);
-char* bltinlookup(const char*, int);
+void listsetvar(struct strlist*, int32_t);
+cstring_t lookupvar(const_cstring_t);
+cstring_t bltinlookup(const_cstring_t, int32_t);
 void bltinsetlocale(void);
 void bltinunsetlocale(void);
 void updatecharset(void);
 void initcharset(void);
-char** environment(void);
-int showvarscmd(int, char**);
-void mklocal(char*);
+cstring_t* environment(void);
+int32_t showvarscmd(int32_t, cstring_t*);
+void mklocal(cstring_t);
 void poplocalvars(void);
-int unsetvar(const char*);
-int setvarsafe(const char*, const char*, int);
+int32_t unsetvar(const_cstring_t);
+int32_t setvarsafe(const_cstring_t, const_cstring_t, int32_t);

@@ -34,13 +34,16 @@
  */
 
 /* values of cmdtype */
-#define CMDUNKNOWN -1		/* no entry in table for command */
-#define CMDNORMAL 0		/* command is an executable program */
-#define CMDBUILTIN 1		/* command is a shell builtin */
-#define CMDFUNCTION 2		/* command is a shell function */
+typedef enum __sh_cmdtype_const
+{
+	CMDUNKNOWN,		/* no entry in table for command */
+	CMDNORMAL,		/* command is an executable program */
+	CMDBUILTIN,		/* command is a shell builtin */
+	CMDFUNCTION,	/* command is a shell function */
+};
 
 /* values for typecmd_impl's third parameter */
-enum
+typedef enum __typecmd_impl_param
 {
 	TYPECMD_SMALLV,		/* command -v */
 	TYPECMD_BIGV,		/* command -V */
@@ -50,13 +53,13 @@ enum
 union node;
 struct cmdentry
 {
-	int cmdtype;
+	int32_t cmdtype;
 	union param
 	{
-		int index;
+		int32_t index;
 		struct funcdef* func;
 	} u;
-	int special;
+	int32_t special;
 };
 
 
@@ -64,17 +67,17 @@ struct cmdentry
 #define DO_ERR		0x01	/* prints errors */
 #define DO_NOFUNC	0x02	/* don't return shell functions, for command */
 
-extern const char* pathopt;	/* set by padvance */
-extern int exerrno;		/* last exec error */
+extern const_cstring_t pathopt;	/* set by padvance */
+extern int32_t exerrno;		/* last exec error */
 
-void shellexec(char**, char**, const char*, int) __dead2;
-char* padvance(const char**, const char*);
-void find_command(const char*, struct cmdentry*, int, const char*);
-int find_builtin(const char*, int*);
+DECLSPEC_NORETURN void shellexec(cstring_t*, cstring_t*, const_cstring_t, int32_t);
+cstring_t padvance(const_cstring_t*, const_cstring_t);
+void find_command(const_cstring_t, struct cmdentry*, int32_t, const_cstring_t);
+int32_t find_builtin(const_cstring_t, int32_t*);
 void hashcd(void);
-void changepath(const char*);
-void defun(const char*, union node*);
-int unsetfunc(const char*);
-int isfunc(const char*);
-int typecmd_impl(int, char**, int, const char*);
+void changepath(const_cstring_t);
+void defun(const_cstring_t, union node*);
+int32_t unsetfunc(const_cstring_t);
+int32_t isfunc(const_cstring_t);
+int32_t typecmd_impl(int32_t, cstring_t*, int32_t, const_cstring_t);
 void clearcmdentry(void);

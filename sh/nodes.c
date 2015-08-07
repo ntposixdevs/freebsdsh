@@ -49,12 +49,12 @@
  * Routine for dealing with parsed shell commands.
  */
 
-static int     funcblocksize;	/* size of structures in function */
-static int     funcstringsize;	/* size of strings in node */
-static pointer funcblock;	/* block to allocate function from */
-static char*   funcstring;	/* block to allocate strings from */
+static size_t  funcblocksize;	/* size of structures in function */
+static size_t  funcstringsize;	/* size of strings in node */
+static pvoid_t funcblock;   	/* block to allocate function from */
+static cstring_t   funcstring;  	/* block to allocate strings from */
 
-static const short nodesize[27] =
+static const int16_t nodesize[27] =
 {
 	ALIGN(sizeof(struct nbinary)),
 	ALIGN(sizeof(struct ncmd)),
@@ -90,12 +90,12 @@ static void calcsize(union node*);
 static void sizenodelist(struct nodelist*);
 static union node* copynode(union node*);
 static struct nodelist* copynodelist(struct nodelist*);
-static char* nodesavestr(const char*);
+static cstring_t nodesavestr(const_cstring_t);
 
 
 struct funcdef
 {
-	unsigned int refcount;
+	uint32_t refcount;
 	union node n;
 };
 
@@ -114,8 +114,8 @@ copyfunc(union node* n)
 	calcsize(n);
 	fn = ckmalloc(funcblocksize + funcstringsize);
 	fn->refcount = 1;
-	funcblock = (char*)fn + offsetof(struct funcdef, n);
-	funcstring = (char*)fn + funcblocksize;
+	funcblock = (cstring_t)fn + offsetof(struct funcdef, n);
+	funcstring = (cstring_t)fn + funcblocksize;
 	copynode(n);
 	return fn;
 }
@@ -229,7 +229,7 @@ static union node*
 	if (n == NULL)
 		return NULL;
 	new = funcblock;
-	funcblock = (char*)funcblock + nodesize[n->type];
+	funcblock = (cstring_t)funcblock + nodesize[n->type];
 	switch (n->type)
 	{
 		case NSEMI:
@@ -320,7 +320,7 @@ copynodelist(struct nodelist* lp)
 	while (lp)
 	{
 		*lpp = funcblock;
-		funcblock = (char*)funcblock + ALIGN(sizeof(struct nodelist));
+		funcblock = (cstring_t)funcblock + ALIGN(sizeof(struct nodelist));
 		(*lpp)->n = copynode(lp->n);
 		lp = lp->next;
 		lpp = &(*lpp)->next;
@@ -331,12 +331,12 @@ copynodelist(struct nodelist* lp)
 
 
 
-static char*
-nodesavestr(const char* s)
+static cstring_t
+nodesavestr(const_cstring_t s)
 {
-	const char* p = s;
-	char* q = funcstring;
-	char*   rtn = funcstring;
+	const_cstring_t p = s;
+	cstring_t q = funcstring;
+	cstring_t   rtn = funcstring;
 	while ((*q++ = *p++) != '\0')
 		continue;
 	funcstring = q;

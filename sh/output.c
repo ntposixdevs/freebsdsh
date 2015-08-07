@@ -44,7 +44,7 @@
 #include "syntax.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "var.h"
 
 /*
@@ -61,56 +61,56 @@
 #define MEM_OUT -2		/* output to dynamically allocated memory */
 #define OUTPUT_ERR 01		/* error occurred on output */
 
-static int doformat_wr(void*, const char*, int);
+static size_t doformat_wr(pvoid_t, const_cstring_t, size_t len);
 
-struct output output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
-struct output errout = {NULL, 0, NULL, 256, 2, 0};
-struct output memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
-struct output* out1 = &output;
-struct output* out2 = &errout;
+output_t output = {NULL, 0, NULL, OUTBUFSIZ, 1, 0};
+output_t errout = {NULL, 0, NULL, 256, 2, 0};
+output_t memout = {NULL, 0, NULL, 0, MEM_OUT, 0};
+poutput_t out1 = &output;
+poutput_t out2 = &errout;
 
 void
-outcslow(int c, struct output* file)
+outcslow(int32_t c, poutput_t file)
 {
 	outc(c, file);
 }
 
 void
-out1str(const char* p)
+out1str(const_cstring_t p)
 {
 	outstr(p, out1);
 }
 
 void
-out1qstr(const char* p)
+out1qstr(const_cstring_t p)
 {
 	outqstr(p, out1);
 }
 
 void
-out2str(const char* p)
+out2str(const_cstring_t p)
 {
 	outstr(p, out2);
 }
 
 void
-out2qstr(const char* p)
+out2qstr(const_cstring_t p)
 {
 	outqstr(p, out2);
 }
 
 void
-outstr(const char* p, struct output* file)
+outstr(const_cstring_t p, poutput_t file)
 {
 	outbin(p, strlen(p), file);
 }
 
 /* Like outstr(), but quote for re-input into the shell. */
 void
-outqstr(const char* p, struct output* file)
+outqstr(const_cstring_t p, poutput_t file)
 {
 	char ch;
-	int inquotes;
+	int32_t inquotes;
 	if (p[0] == '\0')
 	{
 		outstr("''", file);
@@ -147,18 +147,18 @@ outqstr(const char* p, struct output* file)
 }
 
 void
-outbin(const void* data, size_t len, struct output* file)
+outbin(const_pvoid_t data, size_t len, poutput_t file)
 {
-	const char* p;
+	const_cstring_t p;
 	p = data;
 	while (len-- > 0)
 		outc(*p++, file);
 }
 
 void
-emptyoutbuf(struct output* dest)
+emptyoutbuf(poutput_t dest)
 {
-	int offset;
+	int32_t offset;
 	if (dest->buf == NULL)
 	{
 		INTOFF;
@@ -194,7 +194,7 @@ flushall(void)
 
 
 void
-flushout(struct output* dest)
+flushout(poutput_t dest)
 {
 	if (dest->buf == NULL || dest->nextc == dest->buf || dest->fd < 0)
 		return;
@@ -219,22 +219,22 @@ freestdout(void)
 }
 
 
-int
-outiserror(struct output* file)
+int32_t
+outiserror(poutput_t file)
 {
 	return (file->flags & OUTPUT_ERR);
 }
 
 
 void
-outclearerror(struct output* file)
+outclearerror(poutput_t file)
 {
 	file->flags &= ~OUTPUT_ERR;
 }
 
 
 void
-outfmt(struct output* file, const char* fmt, ...)
+outfmt(poutput_t file, const_cstring_t fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -244,7 +244,7 @@ outfmt(struct output* file, const char* fmt, ...)
 
 
 void
-out1fmt(const char* fmt, ...)
+out1fmt(const_cstring_t fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -253,7 +253,7 @@ out1fmt(const char* fmt, ...)
 }
 
 void
-out2fmt_flush(const char* fmt, ...)
+out2fmt_flush(const_cstring_t fmt, ...)
 {
 	va_list ap;
 	va_start(ap, fmt);
@@ -263,7 +263,7 @@ out2fmt_flush(const char* fmt, ...)
 }
 
 void
-fmtstr(char* outbuf, int length, const char* fmt, ...)
+fmtstr(cstring_t outbuf, int32_t length, const_cstring_t fmt, ...)
 {
 	va_list ap;
 	INTOFF;
@@ -273,17 +273,17 @@ fmtstr(char* outbuf, int length, const char* fmt, ...)
 	INTON;
 }
 
-static int
-doformat_wr(void* cookie, const char* buf, int len)
+static size_t
+doformat_wr(pvoid_t cookie, const_cstring_t buf, size_t len)
 {
-	struct output* o;
-	o = (struct output*)cookie;
+	poutput_t o;
+	o = (poutput_t)cookie;
 	outbin(buf, len, o);
 	return (len);
 }
 
 void
-doformat(struct output* dest, const char* f, va_list ap)
+doformat(poutput_t dest, const_cstring_t f, va_list ap)
 {
 	FILE* fp;
 	if ((fp = fwopen(dest, doformat_wr)) != NULL)
@@ -297,12 +297,12 @@ doformat(struct output* dest, const char* f, va_list ap)
  * Version of write which resumes after a signal is caught.
  */
 
-int
-xwrite(int fd, const char* buf, int nbytes)
+int32_t
+xwrite(int32_t fd, const_cstring_t buf, int32_t nbytes)
 {
-	int ntry;
-	int i;
-	int n;
+	int32_t ntry;
+	int32_t i;
+	int32_t n;
 	n = nbytes;
 	ntry = 0;
 	for (;;)

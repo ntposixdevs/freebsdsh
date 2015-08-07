@@ -3,8 +3,8 @@
  */
 
 #include <sys/types.h>
-#include "parser.h"
 #include "shell.h"
+#include "parser.h"
 #include "syntax.h"
 
 /* syntax table used when not in quotes */

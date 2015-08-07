@@ -35,7 +35,7 @@
 
 #include <string.h>
 
-int number(const char*);
-int is_number(const char*);
+int32_t number(const_cstring_t);
+int32_t is_number(const_cstring_t);
 
 #define equal(s1, s2)	(strcmp(s1, s2) == 0)

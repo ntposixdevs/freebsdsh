@@ -35,15 +35,15 @@
 
 extern volatile sig_atomic_t pendingsig;
 extern volatile sig_atomic_t pendingsig_waitcmd;
-extern int in_dotrap;
+extern int32_t in_dotrap;
 
 void clear_traps(void);
-int have_traps(void);
-void setsignal(int);
-void ignoresig(int);
-int issigchldtrapped(void);
-void onsig(int);
+int32_t have_traps(void);
+void setsignal(int32_t);
+void ignoresig(int32_t);
+int32_t issigchldtrapped(void);
+void onsig(int32_t);
 void dotrap(void);
-void setinteractive(int);
-void exitshell(int) __dead2;
-void exitshell_savedstatus(void) __dead2;
+void setinteractive(int32_t);
+DECLSPEC_NORETURN void exitshell(int32_t);
+DECLSPEC_NORETURN void exitshell_savedstatus(void);

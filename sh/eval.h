@@ -33,19 +33,20 @@
  * $FreeBSD: head/bin/sh/eval.h 255215 2013-09-04 22:10:16Z jilles $
  */
 
-extern char* commandname;	/* currently executing command */
-extern int exitstatus;		/* exit status of last command */
-extern int oexitstatus;		/* saved exit status */
+extern cstring_t commandname;	/* currently executing command */
+extern int32_t exitstatus;		/* exit status of last command */
+extern int32_t oexitstatus;		/* saved exit status */
 extern struct strlist* cmdenviron;  /* environment for builtin command */
 
 
-struct backcmd  		/* result of evalbackcmd */
+typedef struct backcmd  		/* result of evalbackcmd */
 {
-	int fd;			/* file descriptor to read from */
-	char* buf;		/* buffer */
-	int nleft;		/* number of chars in buffer */
+	int32_t		fd;			/* file descriptor to read from */
+	cstring_t	buf;		/* buffer */
+	ssize_t		nleft;		/* number of chars in buffer */	// => !!!
 	struct job* jp;		/* job structure for command */
-};
+} backcmd_t;
+typedef backcmd_t* pbackcmd_t;
 
 void reseteval(void);
 
@@ -54,16 +55,16 @@ void reseteval(void);
 #define EV_TESTED 02		/* exit status is checked; ignore -e flag */
 #define EV_BACKCMD 04		/* command executing within back quotes */
 
-void evalstring(char*, int);
+void evalstring(cstring_t, int32_t);
 union node;	/* BLETCH for ansi C */
-void evaltree(union node*, int);
-void evalbackcmd(union node*, struct backcmd*);
+void evaltree(union node*, int32_t);
+void evalbackcmd(union node*, pbackcmd_t);
 
 /* in_function returns nonzero if we are currently evaluating a function */
 #define in_function()	funcnest
-extern int funcnest;
-extern int evalskip;
-extern int skipcount;
+extern int32_t funcnest;
+extern int32_t evalskip;
+extern int32_t skipcount;
 
 /* reasons for skipping commands (see comment on breakcmd routine) */
 #define SKIPBREAK	1

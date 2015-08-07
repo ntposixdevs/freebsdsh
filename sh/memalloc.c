@@ -38,7 +38,7 @@
 #include "shell.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 #include "expand.h"
 
@@ -46,15 +46,15 @@
  * Like malloc, but returns an error when out of space.
  */
 
-pointer
+pvoid_t
 ckmalloc(size_t nbytes)
 {
-	pointer p;
+	pvoid_t p;
 	INTOFF;
 	p = malloc(nbytes);
 	INTON;
 	if (p == NULL)
-		error("Out of space");
+		sherror("Out of space");
 	return p;
 }
 
@@ -63,19 +63,19 @@ ckmalloc(size_t nbytes)
  * Same for realloc.
  */
 
-pointer
-ckrealloc(pointer p, int nbytes)
+pvoid_t
+ckrealloc(pvoid_t p, int32_t nbytes)
 {
 	INTOFF;
 	p = realloc(p, nbytes);
 	INTON;
 	if (p == NULL)
-		error("Out of space");
+		sherror("Out of space");
 	return p;
 }
 
 void
-ckfree(pointer p)
+ckfree(pvoid_t p)
 {
 	INTOFF;
 	free(p);
@@ -87,10 +87,10 @@ ckfree(pointer p)
  * Make a copy of a string in safe storage.
  */
 
-char*
-savestr(const char* s)
+cstring_t
+savestr(const_cstring_t s)
 {
-	char* p;
+	cstring_t p;
 	size_t len;
 	len = strlen(s);
 	p = ckmalloc(len + 1);
@@ -116,19 +116,19 @@ struct stack_block
 	struct stack_block* prev;
 	/* Data follows */
 };
-#define SPACE(sp)	((char*)(sp) + ALIGN(sizeof(struct stack_block)))
+#define SPACE(sp)	((cstring_t)(sp) + ALIGN(sizeof(struct stack_block)))
 
 static struct stack_block* stackp;
-char* stacknxt;
-int stacknleft;
-char* sstrend;
+cstring_t stacknxt;
+int32_t stacknleft;
+cstring_t sstrend;
 
 
 static void
-stnewblock(int nbytes)
+stnewblock(int32_t nbytes)
 {
 	struct stack_block* sp;
-	int allocsize;
+	int32_t allocsize;
 	if (nbytes < MINSIZE)
 		nbytes = MINSIZE;
 	allocsize = ALIGN(sizeof(struct stack_block)) + ALIGN(nbytes);
@@ -136,17 +136,17 @@ stnewblock(int nbytes)
 	sp = ckmalloc(allocsize);
 	sp->prev = stackp;
 	stacknxt = SPACE(sp);
-	stacknleft = allocsize - (stacknxt - (char*)sp);
+	stacknleft = allocsize - (stacknxt - (cstring_t)sp);
 	sstrend = stacknxt + stacknleft;
 	stackp = sp;
 	INTON;
 }
 
 
-pointer
-stalloc(int nbytes)
+pvoid_t
+stalloc(size_t nbytes)
 {
-	char* p;
+	cstring_t p;
 	nbytes = ALIGN(nbytes);
 	if (nbytes > stacknleft)
 		stnewblock(nbytes);
@@ -158,14 +158,14 @@ stalloc(int nbytes)
 
 
 void
-stunalloc(pointer p)
+stunalloc(pvoid_t p)
 {
 	if (p == NULL)  		/*DEBUG */
 	{
 		write(STDERR_FILENO, "stunalloc\n", 10);
 		abort();
 	}
-	stacknleft += stacknxt - (char*)p;
+	stacknleft += stacknxt - (cstring_t)p;
 	stacknxt = p;
 }
 
@@ -203,8 +203,8 @@ popstackmark(struct stackmark* mark)
 
 /*
  * When the parser reads in a string, it wants to stick the string on the
- * stack and only adjust the stack pointer when it knows how big the
- * string is.  Stackblock (defined in stack.h) returns a pointer to a block
+ * stack and only adjust the stack pvoid_t when it knows how big the
+ * string is.  Stackblock (defined in stack.h) returns a pvoid_t to a block
  * of space on top of the stack and stackblocklen returns the length of
  * this block.  Growstackblock will grow this space by at least one byte,
  * possibly moving it (like realloc).  Grabstackblock actually allocates the
@@ -212,19 +212,19 @@ popstackmark(struct stackmark* mark)
  */
 
 static void
-growstackblock(int min)
+growstackblock(int32_t min)
 {
-	char* p;
-	int newlen;
-	char* oldspace;
-	int oldlen;
+	cstring_t p;
+	int32_t newlen;
+	cstring_t oldspace;
+	int32_t oldlen;
 	struct stack_block* sp;
 	struct stack_block* oldstackp;
 	if (min < stacknleft)
 		min = stacknleft;
-	if ((unsigned int)min >=
+	if ((uint32_t)min >=
 			INT_MAX / 2 - ALIGN(sizeof(struct stack_block)))
-		error("Out of space");
+		sherror("Out of space");
 	min += stacknleft;
 	min += ALIGN(sizeof(struct stack_block));
 	newlen = 512;
@@ -237,11 +237,11 @@ growstackblock(int min)
 		INTOFF;
 		oldstackp = stackp;
 		stackp = oldstackp->prev;
-		sp = ckrealloc((pointer)oldstackp, newlen);
+		sp = ckrealloc((pvoid_t)oldstackp, newlen);
 		sp->prev = stackp;
 		stackp = sp;
 		stacknxt = SPACE(sp);
-		stacknleft = newlen - (stacknxt - (char*)sp);
+		stacknleft = newlen - (stacknxt - (cstring_t)sp);
 		sstrend = stacknxt + stacknleft;
 		INTON;
 	}
@@ -275,17 +275,17 @@ growstackblock(int min)
  * is space for at least one character.
  */
 
-static char*
-growstrstackblock(int n, int min)
+static cstring_t
+growstrstackblock(int32_t n, int32_t min)
 {
 	growstackblock(min);
 	return stackblock() + n;
 }
 
-char*
+cstring_t
 growstackstr(void)
 {
-	int len;
+	size_t len;
 	len = stackblocksize();
 	return (growstrstackblock(len, 0));
 }
@@ -295,25 +295,25 @@ growstackstr(void)
  * Called from CHECKSTRSPACE.
  */
 
-char*
-makestrspace(int min, char* p)
+cstring_t
+makestrspace(size_t min, cstring_t p)
 {
-	int len;
+	size_t len;
 	len = p - stackblock();
 	return (growstrstackblock(len, min));
 }
 
 
-char*
-stputbin(const char* data, size_t len, char* p)
+cstring_t
+stputbin(const_cstring_t data, size_t len, cstring_t p)
 {
 	CHECKSTRSPACE(len, p);
 	memcpy(p, data, len);
 	return (p + len);
 }
 
-char*
-stputs(const char* data, char* p)
+cstring_t
+stputs(const_cstring_t data, cstring_t p)
 {
 	return (stputbin(data, strlen(data), p));
 }

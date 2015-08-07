@@ -32,9 +32,9 @@
 
 void showtree(union node*);
 #ifdef DEBUG
-void sh_trace(const char*, ...) __printflike(1, 2);
-void trargs(char**);
-void trputc(int);
-void trputs(const char*);
+void sh_trace(const_cstring_t, ...) __printflike(1, 2);
+void trargs(cstring_t*);
+void trputc(int32_t);
+void trputs(const_cstring_t);
 void opentrace(void);
 #endif

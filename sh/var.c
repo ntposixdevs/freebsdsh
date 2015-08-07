@@ -50,7 +50,7 @@
 #include "mail.h"
 #include "var.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 #include "parser.h"
 #include "builtins.h"
@@ -65,13 +65,13 @@
 #define VTABSIZE 39
 
 
-struct varinit
+typedef struct varinit
 {
 	struct var* var;
-	int flags;
-	const char* text;
-	void (*func)(const char*);
-};
+	int32_t flags;
+	const_cstring_t text;
+	void (*func)(const_cstring_t);
+} varinit_t;
 
 
 #ifndef NO_HISTORY
@@ -88,7 +88,7 @@ struct var vps4;
 static struct var voptind;
 struct var vdisvfork;
 
-int forcelocal;
+int32_t forcelocal;
 
 static const struct varinit varinit[] =
 {
@@ -147,21 +147,21 @@ static const struct varinit varinit[] =
 
 static struct var* vartab[VTABSIZE];
 
-static const char* const locale_names[7] =
+static const_cstring_t const locale_names[7] =
 {
 	"LC_COLLATE", "LC_CTYPE", "LC_MONETARY",
 	"LC_NUMERIC", "LC_TIME", "LC_MESSAGES", NULL
 };
-static const int locale_categories[7] =
+static const int32_t locale_categories[7] =
 {
 	LC_COLLATE, LC_CTYPE, LC_MONETARY, LC_NUMERIC, LC_TIME, LC_MESSAGES, 0
 };
 
-static int varequal(const char*, const char*);
-static struct var* find_var(const char*, struct var***, int*);
-static int localevar(const char*);
+static int32_t varequal(const_cstring_t, const_cstring_t);
+static struct var* find_var(const_cstring_t, struct var***, int32_t*);
+static int32_t localevar(const_cstring_t);
 
-extern char** environ;
+extern cstring_t* environ;
 
 /*
  * This routine initializes the builtin variables and imports the environment.
@@ -175,14 +175,14 @@ initvar(void)
 	const struct varinit* ip;
 	struct var* vp;
 	struct var** vpp;
-	char** envp;
+	cstring_t* envp;
 	for (ip = varinit ; (vp = ip->var) != NULL ; ip++)
 	{
 		if (find_var(ip->text, &vpp, &vp->name_len) != NULL)
 			continue;
 		vp->next = *vpp;
 		*vpp = vp;
-		vp->text = __DECONST(char*, ip->text);
+		vp->text = __DECONST(cstring_t, ip->text);
 		vp->flags = ip->flags | VSTRFIXED | VTEXTFIXED;
 		vp->func = ip->func;
 	}
@@ -193,10 +193,10 @@ initvar(void)
 	{
 		vps1.next = *vpp;
 		*vpp = &vps1;
-		vps1.text = __DECONST(char*, geteuid() ? "PS1=$ " : "PS1=# ");
+		vps1.text = __DECONST(cstring_t, geteuid() ? "PS1=$ " : "PS1=# ");
 		vps1.flags = VSTRFIXED | VTEXTFIXED;
 	}
-	fmtstr(ppid, sizeof(ppid), "%d", (int)getppid());
+	fmtstr(ppid, sizeof(ppid), "%d", (int32_t)getppid());
 	setvarsafe("PPID", ppid, 0);
 	for (envp = environ ; *envp ; envp++)
 	{
@@ -212,13 +212,13 @@ initvar(void)
  * Safe version of setvar, returns 1 on success 0 on failure.
  */
 
-int
-setvarsafe(const char* name, const char* val, int flags)
+int32_t
+setvarsafe(const_cstring_t name, const_cstring_t val, int32_t flags)
 {
 	struct jmploc jmploc;
 	struct jmploc* const savehandler = handler;
-	int err = 0;
-	int inton;
+	int32_t err = 0;
+	int32_t inton;
 	inton = is_int_on();
 	if (setjmp(jmploc.loc))
 		err = 1;
@@ -238,14 +238,14 @@ setvarsafe(const char* name, const char* val, int flags)
  */
 
 void
-setvar(const char* name, const char* val, int flags)
+setvar(const_cstring_t name, const_cstring_t val, int32_t flags)
 {
-	const char* p;
+	const_cstring_t p;
 	size_t len;
 	size_t namelen;
 	size_t vallen;
-	char* nameeq;
-	int isbad;
+	cstring_t nameeq;
+	int32_t isbad;
 	isbad = 0;
 	p = name;
 	if (! is_name(*p))
@@ -263,7 +263,7 @@ setvar(const char* name, const char* val, int flags)
 	}
 	namelen = p - name;
 	if (isbad)
-		error("%.*s: bad variable name", (int)namelen, name);
+		sherror("%.*s: bad variable name", (int32_t)namelen, name);
 	len = namelen + 2;		/* 2 is space for '=' and '\0' */
 	if (val == NULL)
 	{
@@ -287,10 +287,10 @@ setvar(const char* name, const char* val, int flags)
 	INTON;
 }
 
-static int
-localevar(const char* s)
+static int32_t
+localevar(const_cstring_t s)
 {
-	const char* const* ss;
+	const_cstring_t const* ss;
 	if (*s != 'L')
 		return 0;
 	if (varequal(s + 1, "ANG"))
@@ -307,14 +307,14 @@ localevar(const char* s)
 
 
 /*
- * Sets/unsets an environment variable from a pointer that may actually be a
- * pointer into environ where the string should not be manipulated.
+ * Sets/unsets an environment variable from a pvoid_t that may actually be a
+ * pvoid_t into environ where the string should not be manipulated.
  */
 static void
-change_env(const char* s, int set)
+change_env(const_cstring_t s, int32_t set)
 {
-	char* eqp;
-	char* ss;
+	cstring_t eqp;
+	cstring_t ss;
 	INTOFF;
 	ss = savestr(s);
 	if ((eqp = strchr(ss, '=')) != NULL)
@@ -337,10 +337,10 @@ change_env(const char* s, int set)
  */
 
 void
-setvareq(char* s, int flags)
+setvareq(cstring_t s, int32_t flags)
 {
 	struct var* vp, **vpp;
-	int nlen;
+	int32_t nlen;
 	if (aflag)
 		flags |= VEXPORT;
 	if (forcelocal && !(flags & (VNOSET | VNOLOCAL)))
@@ -352,7 +352,7 @@ setvareq(char* s, int flags)
 		{
 			if ((flags & (VTEXTFIXED | VSTACK)) == 0)
 				ckfree(s);
-			error("%.*s: is read only", vp->name_len, s);
+			sherror("%.*s: is read only", vp->name_len, s);
 		}
 		if (flags & VNOSET)
 		{
@@ -419,7 +419,7 @@ setvareq(char* s, int flags)
  */
 
 void
-listsetvar(struct strlist* list, int flags)
+listsetvar(struct strlist* list, int32_t flags)
 {
 	struct strlist* lp;
 	INTOFF;
@@ -436,8 +436,8 @@ listsetvar(struct strlist* list, int flags)
  * Find the value of a variable.  Returns NULL if not set.
  */
 
-char*
-lookupvar(const char* name)
+cstring_t
+lookupvar(const_cstring_t name)
 {
 	struct var* v;
 	v = find_var(name, NULL, NULL);
@@ -454,12 +454,12 @@ lookupvar(const char* name)
  * exported.
  */
 
-char*
-bltinlookup(const char* name, int doall)
+cstring_t
+bltinlookup(const_cstring_t name, int32_t doall)
 {
 	struct strlist* sp;
 	struct var* v;
-	char* result;
+	cstring_t result;
 	result = NULL;
 	for (sp = cmdenviron ; sp ; sp = sp->next)
 	{
@@ -483,9 +483,11 @@ void
 bltinsetlocale(void)
 {
 	struct strlist* lp;
-	int act = 0;
-	char* loc, *locdef;
-	int i;
+	int32_t act = 0;
+	cstring_t loc;
+	cstring_t locdef;
+	size_t i;
+
 	for (lp = cmdenviron ; lp ; lp = lp->next)
 	{
 		if (localevar(lp->text))
@@ -544,7 +546,7 @@ bltinunsetlocale(void)
 void
 updatecharset(void)
 {
-	char* charset;
+	cstring_t charset;
 	charset = nl_langinfo(CODESET);
 	localeisutf8 = !strcmp(charset, "UTF-8");
 }
@@ -561,13 +563,13 @@ initcharset(void)
  * the third argument to execve when executing a program.
  */
 
-char**
+cstring_t*
 environment(void)
 {
-	int nenv;
+	int32_t nenv;
 	struct var** vpp;
 	struct var* vp;
-	char** env, **ep;
+	cstring_t* env, **ep;
 	nenv = 0;
 	for (vpp = vartab ; vpp < vartab + VTABSIZE ; vpp++)
 	{
@@ -587,15 +589,16 @@ environment(void)
 }
 
 
-static int
-var_compare(const void* a, const void* b)
+static int32_t
+var_compare(const_pvoid_t a, const_pvoid_t b)
 {
-	const char* const* sa, *const* sb;
+	const_cstring_t const* sa;
+	const_cstring_t const* sb;
 	sa = a;
 	sb = b;
 	/*
 	 * This compares two var=value strings which creates a different
-	 * order from what you would probably expect.  POSIX is somewhat
+	 * order from what you would probably expect. POSIX is somewhat
 	 * ambiguous on what should be sorted exactly.
 	 */
 	return strcoll(*sa, *sb);
@@ -607,14 +610,14 @@ var_compare(const void* a, const void* b)
  * set command when it is called without any options or operands.
  */
 
-int
-showvarscmd(int argc __unused, char** argv __unused)
+int32_t
+showvarscmd(int32_t argc __unused, cstring_t* argv __unused)
 {
 	struct var** vpp;
 	struct var* vp;
-	const char* s;
-	const char** vars;
-	int i, n;
+	const_cstring_t s;
+	const_cstring_t* vars;
+	int32_t i, n;
 	/*
 	 * POSIX requires us to sort the variables.
 	 */
@@ -664,17 +667,17 @@ showvarscmd(int argc __unused, char** argv __unused)
  * The export and readonly commands.
  */
 
-int
-exportcmd(int argc __unused, char** argv)
+int32_t
+exportcmd(int32_t argc __unused, cstring_t* argv)
 {
 	struct var** vpp;
 	struct var* vp;
-	char** ap;
-	char* name;
-	char* p;
-	char* cmdname;
-	int ch, values;
-	int flag = argv[0][0] == 'r' ? VREADONLY : VEXPORT;
+	cstring_t* ap;
+	cstring_t name;
+	cstring_t p;
+	cstring_t cmdname;
+	int32_t ch, values;
+	int32_t flag = argv[0][0] == 'r' ? VREADONLY : VEXPORT;
 	cmdname = argv[0];
 	values = 0;
 	while ((ch = nextopt("p")) != '\0')
@@ -687,7 +690,7 @@ exportcmd(int argc __unused, char** argv)
 		}
 	}
 	if (values && *argptr != NULL)
-		error("-p requires no arguments");
+		sherror("-p requires no arguments");
 	if (*argptr != NULL)
 	{
 		for (ap = argptr; (name = *ap) != NULL; ap++)
@@ -757,13 +760,13 @@ exportcmd(int argc __unused, char** argv)
  * The "local" command.
  */
 
-int
-localcmd(int argc __unused, char** argv __unused)
+int32_t
+localcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	char* name;
+	cstring_t name;
 	nextopt("");
 	if (! in_function())
-		error("Not in a function");
+		sherror("Not in a function");
 	while ((name = *argptr++) != NULL)
 	{
 		mklocal(name);
@@ -780,7 +783,7 @@ localcmd(int argc __unused, char** argv __unused)
  */
 
 void
-mklocal(char* name)
+mklocal(cstring_t name)
 {
 	struct localvar* lvp;
 	struct var** vpp;
@@ -859,15 +862,15 @@ poplocalvars(void)
 }
 
 
-int
-setvarcmd(int argc, char** argv)
+int32_t
+setvarcmd(int32_t argc, cstring_t* argv)
 {
 	if (argc <= 2)
 		return unsetcmd(argc, argv);
 	else if (argc == 3)
 		setvar(argv[1], argv[2], 0);
 	else
-		error("too many arguments");
+		sherror("too many arguments");
 	return 0;
 }
 
@@ -876,14 +879,14 @@ setvarcmd(int argc, char** argv)
  * The unset builtin command.
  */
 
-int
-unsetcmd(int argc __unused, char** argv __unused)
+int32_t
+unsetcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	char** ap;
-	int i;
-	int flg_func = 0;
-	int flg_var = 0;
-	int ret = 0;
+	cstring_t* ap;
+	int32_t i;
+	int32_t flg_func = 0;
+	int32_t flg_var = 0;
+	int32_t ret = 0;
 	while ((i = nextopt("vf")) != '\0')
 	{
 		if (i == 'f')
@@ -911,8 +914,8 @@ unsetcmd(int argc __unused, char** argv __unused)
  * Called with interrupts off.
  */
 
-int
-unsetvar(const char* s)
+int32_t
+unsetvar(const_cstring_t s)
 {
 	struct var** vpp;
 	struct var* vp;
@@ -949,8 +952,8 @@ unsetvar(const char* s)
  * either '=' or '\0'.
  */
 
-static int
-varequal(const char* p, const char* q)
+static int32_t
+varequal(const_cstring_t p, const_cstring_t q)
 {
 	while (*p == *q++)
 	{
@@ -965,20 +968,20 @@ varequal(const char* p, const char* q)
 /*
  * Search for a variable.
  * 'name' may be terminated by '=' or a NUL.
- * vppp is set to the pointer to vp, or the list head if vp isn't found
+ * vppp is set to the pvoid_t to vp, or the list head if vp isn't found
  * lenp is set to the number of characters in 'name'
  */
 
 static struct var*
-find_var(const char* name, struct var** *vppp, int* lenp)
+find_var(const_cstring_t name, struct var*** vppp, int32_t* lenp)
 {
-	unsigned int hashval;
-	int len;
+	uint32_t hashval;
+	size_t len;
 	struct var* vp, **vpp;
-	const char* p = name;
+	const_cstring_t p = name;
 	hashval = 0;
 	while (*p && *p != '=')
-		hashval = 2 * hashval + (unsigned char) * p++;
+		hashval = 2 * hashval + (char32_t)*p++;
 	len = p - name;
 	if (lenp)
 		*lenp = len;

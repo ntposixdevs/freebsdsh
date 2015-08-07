@@ -34,7 +34,7 @@
 
 struct nbinary
 {
-	int type;
+	int32_t type;
 	union node* ch1;
 	union node* ch2;
 };
@@ -42,7 +42,7 @@ struct nbinary
 
 struct ncmd
 {
-	int type;
+	int32_t type;
 	union node* args;
 	union node* redirect;
 };
@@ -50,15 +50,15 @@ struct ncmd
 
 struct npipe
 {
-	int type;
-	int backgnd;
+	int32_t type;
+	int32_t backgnd;
 	struct nodelist* cmdlist;
 };
 
 
 struct nredir
 {
-	int type;
+	int32_t type;
 	union node* n;
 	union node* redirect;
 };
@@ -66,7 +66,7 @@ struct nredir
 
 struct nif
 {
-	int type;
+	int32_t type;
 	union node* test;
 	union node* ifpart;
 	union node* elsepart;
@@ -75,16 +75,16 @@ struct nif
 
 struct nfor
 {
-	int type;
+	int32_t type;
 	union node* args;
 	union node* body;
-	char* var;
+	cstring_t var;
 };
 
 
 struct ncase
 {
-	int type;
+	int32_t type;
 	union node* expr;
 	union node* cases;
 };
@@ -92,7 +92,7 @@ struct ncase
 
 struct nclist
 {
-	int type;
+	int32_t type;
 	union node* next;
 	union node* pattern;
 	union node* body;
@@ -101,53 +101,53 @@ struct nclist
 
 struct narg
 {
-	int type;
+	int32_t type;
 	union node* next;
-	char* text;
+	cstring_t text;
 	struct nodelist* backquote;
 };
 
 
 struct nfile
 {
-	int type;
-	int fd;
+	int32_t type;
+	int32_t fd;
 	union node* next;
 	union node* fname;
-	char* expfname;
+	cstring_t expfname;
 };
 
 
 struct ndup
 {
-	int type;
-	int fd;
+	int32_t type;
+	int32_t fd;
 	union node* next;
-	int dupfd;
+	int32_t dupfd;
 	union node* vname;
 };
 
 
 struct nhere
 {
-	int type;
-	int fd;
+	int32_t type;
+	int32_t fd;
 	union node* next;
 	union node* doc;
-	char* expdoc;
+	cstring_t expdoc;
 };
 
 
 struct nnot
 {
-	int type;
+	int32_t type;
 	union node* com;
 };
 
 
 union node
 {
-	int type;
+	int32_t type;
 	struct nbinary nbinary;
 	struct ncmd ncmd;
 	struct npipe npipe;

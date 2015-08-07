@@ -38,9 +38,9 @@
 struct alias
 {
 	struct alias* next;
-	char* name;
-	char* val;
-	int flag;
+	cstring_t name;
+	cstring_t val;
+	int32_t flag;
 };
 
-struct alias* lookupalias(const char*, int);
+struct alias* lookupalias(const_cstring_t, int32_t);

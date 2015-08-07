@@ -56,22 +56,22 @@
 #include "var.h"
 #include "show.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 #include "exec.h"
 #include "cd.h"
 #include "redir.h"
 #include "builtins.h"
 
-int rootpid;
-int rootshell;
+int32_t rootpid;
+int32_t rootshell;
 struct jmploc main_handler;
-int localeisutf8, initial_localeisutf8;
+int32_t localeisutf8, initial_localeisutf8;
 
 static void reset(void);
-static void cmdloop(int);
-static void read_profile(const char*);
-static char* find_dot_file(char*);
+static void cmdloop(int32_t);
+static void read_profile(const_cstring_t);
+static cstring_t find_dot_file(cstring_t);
 
 /*
  * Main routine.  We initialize things, parse the arguments, execute
@@ -81,12 +81,12 @@ static char* find_dot_file(char*);
  * is used to figure out how far we had gotten.
  */
 
-int
-main(int argc, char* argv[])
+int32_t
+main(int32_t argc, cstring_t argv[])
 {
 	struct stackmark smark, smark2;
-	volatile int state;
-	char* shinit;
+	volatile int32_t state;
+	cstring_t shinit;
 	(void) setlocale(LC_ALL, "");
 	initcharset();
 	state = 0;
@@ -188,12 +188,12 @@ reset(void)
  */
 
 static void
-cmdloop(int top)
+cmdloop(int32_t top)
 {
 	union node* n;
 	struct stackmark smark;
-	int inter;
-	int numeof = 0;
+	int32_t inter;
+	int32_t numeof = 0;
 	TRACE(("cmdloop(%d) called\n", top));
 	setstackmark(&smark);
 	for (;;)
@@ -247,10 +247,10 @@ cmdloop(int top)
  */
 
 static void
-read_profile(const char* name)
+read_profile(const_cstring_t name)
 {
-	int fd;
-	const char* expandedname;
+	int32_t fd;
+	const_cstring_t expandedname;
 	expandedname = expandstr(name);
 	if (expandedname == NULL)
 		return;
@@ -271,7 +271,7 @@ read_profile(const char* name)
  */
 
 void
-readcmdfile(const char* name)
+readcmdfile(const_cstring_t name)
 {
 	setinputfile(name, 1);
 	cmdloop(0);
@@ -286,11 +286,11 @@ readcmdfile(const char* name)
  */
 
 
-static char*
-find_dot_file(char* basename)
+static cstring_t
+find_dot_file(cstring_t basename)
 {
-	char* fullname;
-	const char* path = pathval();
+	cstring_t fullname;
+	const_cstring_t path = pathval();
 	struct stat statb;
 	/* don't try this for absolute or relative paths */
 	if (strchr(basename, '/'))
@@ -310,12 +310,14 @@ find_dot_file(char* basename)
 	return basename;
 }
 
-int
-dotcmd(int argc, char** argv)
+int32_t
+dotcmd(int32_t argc, cstring_t* argv)
 {
-	char* filename, *fullname;
+	cstring_t filename;
+	cstring_t fullname;
+
 	if (argc < 2)
-		error("missing filename");
+		sherror("missing filename");
 	exitstatus = 0;
 	/*
 	 * Because we have historically not supported any options,
@@ -331,8 +333,8 @@ dotcmd(int argc, char** argv)
 }
 
 
-int
-exitcmd(int argc, char** argv)
+int32_t
+exitcmd(int32_t argc, cstring_t* argv)
 {
 	if (stoppedjobs())
 		return 0;

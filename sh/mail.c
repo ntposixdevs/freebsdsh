@@ -41,7 +41,7 @@
 #include "var.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 
 /*
  * Routines to check for mail.  (Perhaps make part of main.c?)
@@ -51,7 +51,7 @@
 #define MAXMBOXES 10
 
 
-static int nmboxes;			/* number of mailboxes */
+static int32_t nmboxes;			/* number of mailboxes */
 static time_t mailtime[MAXMBOXES];	/* times of mailboxes */
 
 
@@ -63,12 +63,12 @@ static time_t mailtime[MAXMBOXES];	/* times of mailboxes */
  */
 
 void
-chkmail(int silent)
+chkmail(int32_t silent)
 {
-	int i;
-	const char* mpath;
-	char* p;
-	char* q;
+	int32_t i;
+	const_cstring_t mpath;
+	cstring_t p;
+	cstring_t q;
 	struct stackmark smark;
 	struct stat statb;
 	if (silent)

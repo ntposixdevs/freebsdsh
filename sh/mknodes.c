@@ -51,60 +51,60 @@
 #define T_NODE 1		/* union node *field */
 #define T_NODELIST 2		/* struct nodelist *field */
 #define T_STRING 3
-#define T_INT 4			/* int field */
+#define T_INT 4			/* int32_t field */
 #define T_OTHER 5		/* other */
 #define T_TEMP 6		/* don't copy this field */
 
 
 struct field  			/* a structure field */
 {
-	char* name;		/* name of field */
-	int type;			/* type of field */
-	char* decl;		/* declaration of field */
+	cstring_t name;		/* name of field */
+	int32_t type;			/* type of field */
+	cstring_t decl;		/* declaration of field */
 };
 
 
 struct str  			/* struct representing a node structure */
 {
-	char* tag;		/* structure tag */
-	int nfields;		/* number of fields in the structure */
+	cstring_t tag;		/* structure tag */
+	int32_t nfields;		/* number of fields in the structure */
 	struct field field[MAXFIELDS];	/* the fields of the structure */
-	int done;			/* set if fully parsed */
+	int32_t done;			/* set if fully parsed */
 };
 
 
-static int ntypes;			/* number of node types */
-static char* nodename[MAXTYPES];	/* names of the nodes */
+static int32_t ntypes;			/* number of node types */
+static cstring_t nodename[MAXTYPES];	/* names of the nodes */
 static struct str* nodestr[MAXTYPES];	/* type of structure used by the node */
-static int nstr;			/* number of structures */
+static int32_t nstr;			/* number of structures */
 static struct str str[MAXTYPES];	/* the structures */
 static struct str* curstr;		/* current structure */
 static FILE* infp;
 static char line[1024];
-static int linno;
-static char* linep;
+static int32_t linno;
+static cstring_t linep;
 
 static void parsenode(void);
 static void parsefield(void);
-static void output(char*);
+static void output(cstring_t);
 static void outsizes(FILE*);
-static void outfunc(FILE*, int);
-static void indent(int, FILE*);
-static int nextfield(char*);
+static void outfunc(FILE*, int32_t);
+static void indent(int32_t, FILE*);
+static int32_t nextfield(cstring_t);
 static void skipbl(void);
-static int readline(void);
-static void error(const char*, ...) /*__printf0like(1, 2) __dead2*/;
-static char* savestr(const char*);
+static int32_t readline(void);
+static void sherror(const_cstring_t, ...) /*__printf0like(1, 2) __dead2*/;
+static cstring_t savestr(const_cstring_t);
 
 
-int
-main(int argc, char* argv[])
+int32_t
+main(int32_t argc, cstring_t argv[])
 {
 	if (argc != 3)
-		error("usage: mknodes file");
+		sherror("usage: mknodes file");
 	infp = stdin;
 	if ((infp = fopen(argv[1], "r")) == NULL)
-		error("Can't open %s: %s", argv[1], strerror(errno));
+		sherror("Can't open %s: %s", argv[1], strerror(errno));
 	while (readline())
 	{
 		if (line[0] == ' ' || line[0] == '\t')
@@ -128,9 +128,9 @@ parsenode(void)
 		curstr->done = 1;
 	nextfield(name);
 	if (! nextfield(tag))
-		error("Tag expected");
+		sherror("Tag expected");
 	if (*linep != '\0')
-		error("Garbage at end of line");
+		sherror("Garbage at end of line");
 	nodename[ntypes] = savestr(name);
 	for (sp = str ; sp < str + nstr ; sp++)
 	{
@@ -157,11 +157,11 @@ parsefield(void)
 	char decl[2 * BUFLEN];
 	struct field* fp;
 	if (curstr == NULL || curstr->done)
-		error("No current structure to add field to");
+		sherror("No current structure to add field to");
 	if (! nextfield(name))
-		error("No field name");
+		sherror("No field name");
 	if (! nextfield(type))
-		error("No field type");
+		sherror("No field type");
 	fp = &curstr->field[curstr->nfields];
 	fp->name = savestr(name);
 	if (strcmp(type, "nodeptr") == 0)
@@ -179,10 +179,10 @@ parsefield(void)
 		fp->type = T_STRING;
 		sprintf(decl, "char *%s", name);
 	}
-	else if (strcmp(type, "int") == 0)
+	else if (strcmp(type, "int32_t") == 0)
 	{
 		fp->type = T_INT;
-		sprintf(decl, "int %s", name);
+		sprintf(decl, "int32_t %s", name);
 	}
 	else if (strcmp(type, "other") == 0)
 	{
@@ -194,7 +194,7 @@ parsefield(void)
 	}
 	else
 	{
-		error("Unknown type %s", type);
+		sherror("Unknown type %s", type);
 	}
 	if (fp->type == T_OTHER || fp->type == T_TEMP)
 	{
@@ -204,7 +204,7 @@ parsefield(void)
 	else
 	{
 		if (*linep)
-			error("Garbage at end of line");
+			sherror("Garbage at end of line");
 		fp->decl = savestr(decl);
 	}
 	curstr->nfields++;
@@ -218,21 +218,21 @@ char writer[] = "\
 \n";
 
 static void
-output(char* file)
+output(cstring_t file)
 {
 	FILE* hfile;
 	FILE* cfile;
 	FILE* patfile;
-	int i;
+	int32_t i;
 	struct str* sp;
 	struct field* fp;
-	char* p;
+	cstring_t p;
 	if ((patfile = fopen(file, "r")) == NULL)
-		error("Can't open %s: %s", file, strerror(errno));
+		sherror("Can't open %s: %s", file, strerror(errno));
 	if ((hfile = fopen("nodes.h", "w")) == NULL)
-		error("Can't create nodes.h: %s", strerror(errno));
+		sherror("Can't create nodes.h: %s", strerror(errno));
 	if ((cfile = fopen("nodes.c", "w")) == NULL)
-		error("Can't create nodes.c");
+		sherror("Can't create nodes.c");
 	fputs(writer, hfile);
 	for (i = 0 ; i < ntypes ; i++)
 		fprintf(hfile, "#define %s %d\n", nodename[i], i);
@@ -247,7 +247,7 @@ output(char* file)
 		fputs("};\n\n\n", hfile);
 	}
 	fputs("union node {\n", hfile);
-	fprintf(hfile, "      int type;\n");
+	fprintf(hfile, "      int32_t type;\n");
 	for (sp = str ; sp < &str[nstr] ; sp++)
 	{
 		fprintf(hfile, "      struct %s %s;\n", sp->tag, sp->tag);
@@ -282,8 +282,8 @@ output(char* file)
 static void
 outsizes(FILE* cfile)
 {
-	int i;
-	fprintf(cfile, "static const short nodesize[%d] = {\n", ntypes);
+	int32_t i;
+	fprintf(cfile, "static const int16_t nodesize[%d] = {\n", ntypes);
 	for (i = 0 ; i < ntypes ; i++)
 	{
 		fprintf(cfile, "      ALIGN(sizeof (struct %s)),\n", nodestr[i]->tag);
@@ -293,11 +293,11 @@ outsizes(FILE* cfile)
 
 
 static void
-outfunc(FILE* cfile, int calcsize)
+outfunc(FILE* cfile, int32_t calcsize)
 {
 	struct str* sp;
 	struct field* fp;
-	int i;
+	int32_t i;
 	fputs("      if (n == NULL)\n", cfile);
 	if (calcsize)
 		fputs("	    return;\n", cfile);
@@ -386,7 +386,7 @@ outfunc(FILE* cfile, int calcsize)
 
 
 static void
-indent(int amount, FILE* fp)
+indent(int32_t amount, FILE* fp)
 {
 	while (amount >= 8)
 	{
@@ -400,10 +400,11 @@ indent(int amount, FILE* fp)
 }
 
 
-static int
-nextfield(char* buf)
+static int32_t
+nextfield(cstring_t buf)
 {
-	char* p, *q;
+	cstring_t p;
+	cstring_t q;
 	p = linep;
 	while (*p == ' ' || *p == '\t')
 		p++;
@@ -424,10 +425,10 @@ skipbl(void)
 }
 
 
-static int
+static int32_t
 readline(void)
 {
-	char* p;
+	cstring_t p;
 	if (fgets(line, 1024, infp) == NULL)
 		return 0;
 	for (p = line ; *p != '#' && *p != '\n' && *p != '\0' ; p++);
@@ -437,14 +438,14 @@ readline(void)
 	linep = line;
 	linno++;
 	if (p - line > BUFLEN)
-		error("Line too long");
+		sherror("Line too long");
 	return 1;
 }
 
 
 
 static void
-error(const char* msg, ...)
+sherror(const_cstring_t msg, ...)
 {
 	va_list va;
 	va_start(va, msg);
@@ -457,12 +458,12 @@ error(const char* msg, ...)
 
 
 
-static char*
-savestr(const char* s)
+static cstring_t
+savestr(const_cstring_t s)
 {
-	char* p;
+	cstring_t p;
 	if ((p = malloc(strlen(s) + 1)) == NULL)
-		error("Out of space");
+		sherror("Out of space");
 	(void) strcpy(p, s);
 	return p;
 }

@@ -42,19 +42,21 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bltin/bltin.h"
-#include "error.h"
+#include "bltin.h"
+#include "sherror.h"
 
-static void nosig(const char*);
+static void nosig(const_cstring_t);
 static void printsignals(FILE*);
-static int signame_to_signum(const char*);
+static int32_t signame_to_signum(const_cstring_t);
 static void usage(void);
 
-int
-killcmd(int argc, char* argv[])
+int32_t
+killcmd(int32_t argc, cstring_t argv[])
 {
-	int errors, numsig, pid, ret;
-	char* ep;
+	int32_t errors, ret;
+	intptr_t numsig;
+	pid_t pid;
+	cstring_t ep;
 	if (argc < 2)
 		usage();
 	numsig = SIGTERM;
@@ -142,10 +144,10 @@ killcmd(int argc, char* argv[])
 	return (errors);
 }
 
-static int
-signame_to_signum(const char* sig)
+static int32_t
+signame_to_signum(const_cstring_t sig)
 {
-	int n;
+	int32_t n;
 	if (strncasecmp(sig, "SIG", 3) == 0)
 		sig += 3;
 	for (n = 1; n < sys_nsig; n++)
@@ -157,17 +159,17 @@ signame_to_signum(const char* sig)
 }
 
 static void
-nosig(const char* name)
+nosig(const_cstring_t name)
 {
 	warnx("unknown signal %s; valid signals:", name);
 	printsignals(stderr);
-	error(NULL);
+	sherror(NULL);
 }
 
 static void
 printsignals(FILE* fp)
 {
-	int n;
+	int32_t n;
 	for (n = 1; n < sys_nsig; n++)
 	{
 		(void)fprintf(fp, "%s", sys_signame[n]);
@@ -186,5 +188,5 @@ usage(void)
 				  "       kill -l [exit_status]",
 				  "       kill -signal_name pid ...",
 				  "       kill -signal_number pid ...");
-	error(NULL);
+	sherror(NULL);
 }

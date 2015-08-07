@@ -36,7 +36,7 @@
 #include <stdlib.h>
 #include "shell.h"
 #include "syntax.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 
 /*
@@ -59,11 +59,11 @@ char nullstr[1];		/* zero length string */
  * failure.
  */
 
-int
-number(const char* s)
+int32_t
+number(const_cstring_t s)
 {
 	if (! is_number(s))
-		error("Illegal number: %s", s);
+		sherror("Illegal number: %s", s);
 	return atoi(s);
 }
 
@@ -73,10 +73,10 @@ number(const char* s)
  * Check for a valid number.  This should be elsewhere.
  */
 
-int
-is_number(const char* p)
+int32_t
+is_number(const_cstring_t p)
 {
-	const char* q;
+	const_cstring_t q;
 	if (*p == '\0')
 		return 0;
 	while (*p == '0')

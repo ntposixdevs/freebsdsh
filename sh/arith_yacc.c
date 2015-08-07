@@ -43,7 +43,7 @@
 #include "arith_yacc.h"
 #include "expand.h"
 #include "shell.h"
-#include "error.h"
+#include "sherror.h"
 #include "memalloc.h"
 #include "output.h"
 #include "options.h"
@@ -53,12 +53,12 @@
 #error Arithmetic tokens are out of order.
 #endif
 
-static const char* arith_startbuf;
+static const_cstring_t arith_startbuf;
 
-const char* arith_buf;
+const_cstring_t arith_buf;
 union yystype yylval;
 
-static int last_token;
+static int32_t last_token;
 
 #define ARITH_PRECEDENCE(op, prec) [op - ARITH_BINOP_MIN] = prec
 
@@ -84,18 +84,18 @@ static const char prec[ARITH_BINOP_MAX - ARITH_BINOP_MIN] =
 
 #define ARITH_MAX_PREC 8
 
-int letcmd(int, char**);
+int32_t letcmd(int32_t, cstring_t*);
 
-static __dead2 void yyerror(const char* s)
+DECLSPEC_NORETURN static void yyerror(const_cstring_t s)
 {
-	error("arithmetic expression: %s: \"%s\"", s, arith_startbuf);
+	sherror("arithmetic expression: %s: \"%s\"", s, arith_startbuf);
 	/* NOTREACHED */
 }
 
-static arith_t arith_lookupvarint(char* varname)
+static arith_t arith_lookupvarint(cstring_t varname)
 {
-	const char* str;
-	char* p;
+	const_cstring_t str;
+	cstring_t p;
 	arith_t result;
 	str = lookupvar(varname);
 	if (uflag && str == NULL)
@@ -109,17 +109,17 @@ static arith_t arith_lookupvarint(char* varname)
 	return result;
 }
 
-static inline int arith_prec(int op)
+static inline int32_t arith_prec(int32_t op)
 {
 	return prec[op - ARITH_BINOP_MIN];
 }
 
-static inline int higher_prec(int op1, int op2)
+static inline int32_t higher_prec(int32_t op1, int32_t op2)
 {
 	return arith_prec(op1) < arith_prec(op2);
 }
 
-static arith_t do_binop(int op, arith_t a, arith_t b)
+static arith_t do_binop(int32_t op, arith_t a, arith_t b)
 {
 	switch (op)
 	{
@@ -162,9 +162,9 @@ static arith_t do_binop(int op, arith_t a, arith_t b)
 	}
 }
 
-static arith_t assignment(int var, int noeval);
+static arith_t assignment(int32_t var, int32_t noeval);
 
-static arith_t primary(int token, union yystype* val, int op, int noeval)
+static arith_t primary(int32_t token, union yystype* val, int32_t op, int32_t noeval)
 {
 	arith_t result;
 again:
@@ -201,14 +201,14 @@ again:
 	}
 }
 
-static arith_t binop2(arith_t a, int op, int precedence, int noeval)
+static arith_t binop2(arith_t a, int32_t op, int32_t precedence, int32_t noeval)
 {
 	for (;;)
 	{
 		union yystype val;
 		arith_t b;
-		int op2;
-		int token;
+		int32_t op2;
+		int32_t token;
 		token = yylex();
 		val = yylval;
 		b = primary(token, &val, yylex(), noeval);
@@ -227,7 +227,7 @@ static arith_t binop2(arith_t a, int op, int precedence, int noeval)
 	}
 }
 
-static arith_t binop(int token, union yystype* val, int op, int noeval)
+static arith_t binop(int32_t token, union yystype* val, int32_t op, int32_t noeval)
 {
 	arith_t a = primary(token, val, op, noeval);
 	op = last_token;
@@ -236,7 +236,7 @@ static arith_t binop(int token, union yystype* val, int op, int noeval)
 	return binop2(a, op, ARITH_MAX_PREC, noeval);
 }
 
-static arith_t and (int token, union yystype* val, int op, int noeval)
+static arith_t and (int32_t token, union yystype* val, int32_t op, int32_t noeval)
 {
 	arith_t a = binop(token, val, op, noeval);
 	arith_t b;
@@ -249,7 +249,7 @@ static arith_t and (int token, union yystype* val, int op, int noeval)
 	return a && b;
 }
 
-static arith_t or (int token, union yystype* val, int op, int noeval)
+static arith_t or (int32_t token, union yystype* val, int32_t op, int32_t noeval)
 {
 	arith_t a = and (token, val, op, noeval);
 	arith_t b;
@@ -262,7 +262,7 @@ static arith_t or (int token, union yystype* val, int op, int noeval)
 	return a || b;
 }
 
-static arith_t cond(int token, union yystype* val, int op, int noeval)
+static arith_t cond(int32_t token, union yystype* val, int32_t op, int32_t noeval)
 {
 	arith_t a = or (token, val, op, noeval);
 	arith_t b;
@@ -278,10 +278,10 @@ static arith_t cond(int token, union yystype* val, int op, int noeval)
 	return a ? b : c;
 }
 
-static arith_t assignment(int var, int noeval)
+static arith_t assignment(int32_t var, int32_t noeval)
 {
 	union yystype val = yylval;
-	int op = yylex();
+	int32_t op = yylex();
 	arith_t result;
 	char sresult[DIGITS(result) + 1];
 	if (var != ARITH_VAR)
@@ -298,7 +298,7 @@ static arith_t assignment(int var, int noeval)
 	return result;
 }
 
-arith_t arith(const char* s)
+arith_t arith(const_cstring_t s)
 {
 	struct stackmark smark;
 	arith_t result;
@@ -314,12 +314,12 @@ arith_t arith(const char* s)
 /*
  *  The exp(1) builtin.
  */
-int
-letcmd(int argc, char** argv)
+int32_t
+letcmd(int32_t argc, cstring_t* argv)
 {
-	const char* p;
-	char* concat;
-	char** ap;
+	const_cstring_t p;
+	cstring_t concat;
+	cstring_t* ap;
 	arith_t i;
 	if (argc > 1)
 	{

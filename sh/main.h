@@ -33,8 +33,8 @@
  * $FreeBSD: head/bin/sh/main.h 229220 2012-01-01 22:17:12Z jilles $
  */
 
-extern int rootpid;	/* pid of main shell */
-extern int rootshell;	/* true if we aren't a child of the main shell */
+extern int32_t rootpid;	/* pid of main shell */
+extern int32_t rootshell;	/* true if we aren't a child of the main shell */
 extern struct jmploc main_handler;	/* top level exception handler */
 
-void readcmdfile(const char*);
+void readcmdfile(const_cstring_t);

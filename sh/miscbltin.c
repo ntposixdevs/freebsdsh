@@ -47,7 +47,7 @@
 #include "var.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 #include "syntax.h"
 #include "trap.h"
@@ -58,9 +58,9 @@
 
 #undef eflag
 
-int readcmd(int, char**);
-int umaskcmd(int, char**);
-int ulimitcmd(int, char**);
+int32_t readcmd(int32_t, cstring_t*);
+int32_t umaskcmd(int32_t, cstring_t*);
+int32_t ulimitcmd(int32_t, cstring_t*);
 
 /*
  * The read builtin.  The -r option causes backslashes to be treated like
@@ -79,26 +79,26 @@ int ulimitcmd(int, char**);
  * ':b c:'	x='',  y='b c:'
  */
 
-int
-readcmd(int argc __unused, char** argv __unused)
+int32_t
+readcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	char** ap;
-	int backslash;
+	cstring_t* ap;
+	int32_t backslash;
 	char c;
-	int rflag;
-	char* prompt;
-	const char* ifs;
-	char* p;
-	int startword;
-	int status;
-	int i;
-	int is_ifs;
-	int saveall = 0;
+	int32_t rflag;
+	cstring_t prompt;
+	const_cstring_t ifs;
+	cstring_t p;
+	int32_t startword;
+	int32_t status;
+	int32_t i;
+	int32_t is_ifs;
+	int32_t saveall = 0;
 	struct timeval tv;
-	char* tvptr;
+	cstring_t tvptr;
 	fd_set ifds;
 	ssize_t nread;
-	int sig;
+	int32_t sig;
 	rflag = 0;
 	prompt = NULL;
 	tv.tv_sec = -1;
@@ -118,7 +118,7 @@ readcmd(int argc __unused, char** argv __unused)
 			case 't':
 				tv.tv_sec = strtol(shoptarg, &tvptr, 0);
 				if (tvptr == shoptarg)
-					error("timeout value");
+					sherror("timeout value");
 				switch (*tvptr)
 				{
 					case 0:
@@ -131,7 +131,7 @@ readcmd(int argc __unused, char** argv __unused)
 						tv.tv_sec *= 60;
 						break;
 					default:
-						error("timeout unit");
+						sherror("timeout unit");
 				}
 				break;
 		}
@@ -142,7 +142,7 @@ readcmd(int argc __unused, char** argv __unused)
 		flushall();
 	}
 	if (*(ap = argptr) == NULL)
-		error("arg count");
+		sherror("arg count");
 	if ((ifs = bltinlookup("IFS", 1)) == NULL)
 		ifs = " \t\n";
 	if (tv.tv_sec >= 0)
@@ -274,13 +274,13 @@ readcmd(int argc __unused, char** argv __unused)
 
 
 
-int
-umaskcmd(int argc __unused, char** argv __unused)
+int32_t
+umaskcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	char* ap;
-	int mask;
-	int i;
-	int symbolic_mode = 0;
+	cstring_t ap;
+	int32_t mask;
+	int32_t i;
+	int32_t symbolic_mode = 0;
 	while ((i = nextopt("S")) != '\0')
 	{
 		symbolic_mode = 1;
@@ -333,7 +333,7 @@ umaskcmd(int argc __unused, char** argv __unused)
 			do
 			{
 				if (*ap >= '8' || *ap < '0')
-					error("Illegal number: %s", *argptr);
+					sherror("Illegal number: %s", *argptr);
 				mask = (mask << 3) + (*ap - '0');
 			}
 			while (*++ap != '\0');
@@ -341,10 +341,10 @@ umaskcmd(int argc __unused, char** argv __unused)
 		}
 		else
 		{
-			void* set;
+			pvoid_t set;
 			INTOFF;
 			if ((set = setmode(ap)) == 0)
-				error("Illegal number: %s", ap);
+				sherror("Illegal number: %s", ap);
 			mask = getmode(set, ~mask & 0777);
 			umask(~mask & 0777);
 			free(set);
@@ -366,10 +366,10 @@ umaskcmd(int argc __unused, char** argv __unused)
 
 struct limits
 {
-	const char* name;
-	const char* units;
-	int	cmd;
-	int	factor;	/* multiply by to get rlim_{cur,max} values */
+	const_cstring_t name;
+	const_cstring_t units;
+	int32_t	cmd;
+	int32_t	factor;	/* multiply by to get rlim_{cur,max} values */
 	char	option;
 };
 
@@ -397,10 +397,10 @@ static const struct limits limits[] =
 	{ "locked memory",	"kbytes",	RLIMIT_MEMLOCK, 1024, 'l' },
 #endif
 #ifdef RLIMIT_NPROC
-	{ "max user processes",	(char*)0,	RLIMIT_NPROC,      1, 'u' },
+	{ "max user processes",	(cstring_t)0,	RLIMIT_NPROC,      1, 'u' },
 #endif
 #ifdef RLIMIT_NOFILE
-	{ "open files",	(char*)0,	RLIMIT_NOFILE,     1, 'n' },
+	{ "open files",	(cstring_t)0,	RLIMIT_NOFILE,     1, 'n' },
 #endif
 #ifdef RLIMIT_VMEM
 	{ "virtual mem size",	"kbytes",	RLIMIT_VMEM,	1024, 'v' },
@@ -412,12 +412,12 @@ static const struct limits limits[] =
 	{ "sbsize",		"bytes",	RLIMIT_SBSIZE,	   1, 'b' },
 #endif
 #ifdef RLIMIT_NPTS
-	{ "pseudo-terminals",	(char*)0,	RLIMIT_NPTS,	   1, 'p' },
+	{ "pseudo-terminals",	(cstring_t)0,	RLIMIT_NPTS,	   1, 'p' },
 #endif
 #ifdef RLIMIT_KQUEUES
-	{ "kqueues",	(char*)0,	RLIMIT_KQUEUES,	   1, 'k' },
+	{ "kqueues",	(cstring_t)0,	RLIMIT_KQUEUES,	   1, 'k' },
 #endif
-	{ (char*) 0,	(char*)0,	0,		   0, '\0' }
+	{ (cstring_t) 0,	(cstring_t)0,	0,		   0, '\0' }
 };
 
 enum limithow { SOFT = 0x1, HARD = 0x2 };
@@ -440,14 +440,14 @@ printlimit(enum limithow how, const struct rlimit* limit,
 	}
 }
 
-int
-ulimitcmd(int argc __unused, char** argv __unused)
+int32_t
+ulimitcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
 	rlim_t val = 0;
 	enum limithow how = SOFT | HARD;
 	const struct limits*	l;
-	int		set, all = 0;
-	int		optc, what;
+	int32_t		set, all = 0;
+	int32_t		optc, what;
 	struct rlimit	limit;
 	what = 'f';
 	while ((optc = nextopt("HSatfdsmcnuvlbpwk")) != '\0')
@@ -468,32 +468,32 @@ ulimitcmd(int argc __unused, char** argv __unused)
 	for (l = limits; l->name && l->option != what; l++)
 		;
 	if (!l->name)
-		error("internal error (%c)", what);
+		sherror("internal error (%c)", what);
 	set = *argptr ? 1 : 0;
 	if (set)
 	{
-		char* p = *argptr;
+		cstring_t p = *argptr;
 		if (all || argptr[1])
-			error("too many arguments");
+			sherror("too many arguments");
 		if (strcmp(p, "unlimited") == 0)
 			val = RLIM_INFINITY;
 		else
 		{
-			char* end;
+			cstring_t end;
 			uintmax_t uval;
 			if (*p < '0' || *p > '9')
-				error("bad number");
+				sherror("bad number");
 			errno = 0;
 			uval = strtoumax(p, &end, 10);
 			if (errno != 0 || *end != '\0')
-				error("bad number");
+				sherror("bad number");
 			if (uval > UINTMAX_MAX / l->factor)
-				error("bad number");
+				sherror("bad number");
 			uval *= l->factor;
 			val = (rlim_t)uval;
 			if (val < 0 || (uintmax_t)val != uval ||
 					val == RLIM_INFINITY)
-				error("bad number");
+				sherror("bad number");
 		}
 	}
 	if (all)
@@ -502,7 +502,7 @@ ulimitcmd(int argc __unused, char** argv __unused)
 		{
 			char optbuf[40];
 			if (getrlimit(l->cmd, &limit) < 0)
-				error("can't get limit: %s", strerror(errno));
+				sherror("can't get limit: %s", strerror(errno));
 			if (l->units)
 				snprintf(optbuf, sizeof(optbuf),
 						 "(%s, -%c) ", l->units, l->option);
@@ -515,7 +515,7 @@ ulimitcmd(int argc __unused, char** argv __unused)
 		return 0;
 	}
 	if (getrlimit(l->cmd, &limit) < 0)
-		error("can't get limit: %s", strerror(errno));
+		sherror("can't get limit: %s", strerror(errno));
 	if (set)
 	{
 		if (how & SOFT)
@@ -523,7 +523,7 @@ ulimitcmd(int argc __unused, char** argv __unused)
 		if (how & HARD)
 			limit.rlim_max = val;
 		if (setrlimit(l->cmd, &limit) < 0)
-			error("bad limit: %s", strerror(errno));
+			sherror("bad limit: %s", strerror(errno));
 	}
 	else
 		printlimit(how, &limit, l);

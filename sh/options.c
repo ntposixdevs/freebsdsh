@@ -49,26 +49,26 @@
 #include "trap.h"
 #include "var.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 #include "builtins.h"
 #ifndef NO_HISTORY
 #include "myhistedit.h"
 #endif
 
-char* arg0;			/* value of $0 */
+cstring_t arg0;			/* value of $0 */
 struct shparam shellparam;	/* current positional parameters */
-char** argptr;			/* argument list for builtin commands */
-char* shoptarg;			/* set by nextopt (like getopt) */
-char* nextopt_optptr;		/* used by nextopt */
+cstring_t* argptr;			/* argument list for builtin commands */
+cstring_t shoptarg;			/* set by nextopt (like getopt) */
+cstring_t nextopt_optptr;		/* used by nextopt */
 
-char* minusc;			/* argument to -c option */
+cstring_t minusc;			/* argument to -c option */
 
 
-static void options(int);
-static void minus_o(char*, int);
-static void setoption(int, int);
-static int getopts(char*, char*, char**, char***, char**);
+static void options(int32_t);
+static void minus_o(cstring_t, int32_t);
+static void setoption(int32_t, int32_t);
+static int32_t getopts(cstring_t, cstring_t, cstring_t*, cstring_t**, cstring_t*);
 
 
 /*
@@ -76,10 +76,10 @@ static int getopts(char*, char*, char**, char***, char**);
  */
 
 void
-procargs(int argc, char** argv)
+procargs(int32_t argc, cstring_t* argv)
 {
-	int i;
-	char* scriptname;
+	int32_t i;
+	cstring_t scriptname;
 	argptr = argv;
 	if (argc > 0)
 		argptr++;
@@ -133,16 +133,18 @@ optschanged(void)
 }
 
 /*
- * Process shell options.  The global variable argptr contains a pointer
+ * Process shell options.  The global variable argptr contains a pvoid_t
  * to the argument list; we advance it past the options.
  */
 
 static void
-options(int cmdline)
+options(int32_t cmdline)
 {
-	char* kp, *p;
-	int val;
-	int c;
+	cstring_t kp;
+	cstring_t p;
+	int32_t val;
+	int32_t c;
+
 	if (cmdline)
 		minusc = NULL;
 	while ((p = *argptr) != NULL)
@@ -190,13 +192,13 @@ options(int cmdline)
 		{
 			if (c == 'c' && cmdline)
 			{
-				char* q;
+				cstring_t q;
 #ifdef NOHACK	/* removing this code allows sh -ce 'foo' for compat */
 				if (*p == '\0')
 #endif
 					q = *argptr++;
 				if (q == NULL || minusc != NULL)
-					error("Bad -c option");
+					sherror("Bad -c option");
 				minusc = q;
 #ifdef NOHACK
 				break;
@@ -253,9 +255,9 @@ end_options2:
 }
 
 static void
-minus_o(char* name, int val)
+minus_o(cstring_t name, int32_t val)
 {
-	int i;
+	int32_t i;
 	if (name == NULL)
 	{
 		if (val)
@@ -285,21 +287,21 @@ minus_o(char* name, int val)
 				setoption(optlist[i].letter, val);
 				return;
 			}
-		error("Illegal option -o %s", name);
+		sherror("Illegal option -o %s", name);
 	}
 }
 
 
 static void
-setoption(int flag, int val)
+setoption(int32_t flag, int32_t val)
 {
-	int i;
+	int32_t i;
 	if (flag == 'p' && !val && privileged)
 	{
 		if (setgid(getgid()) == -1)
-			error("setgid");
+			sherror("setgid");
 		if (setuid(getuid()) == -1)
-			error("setuid");
+			sherror("setuid");
 	}
 	for (i = 0; i < NOPTS; i++)
 		if (optlist[i].letter == flag)
@@ -315,7 +317,7 @@ setoption(int flag, int val)
 			}
 			return;
 		}
-	error("Illegal option -%c", flag);
+	sherror("Illegal option -%c", flag);
 }
 
 
@@ -324,11 +326,11 @@ setoption(int flag, int val)
  */
 
 void
-setparam(char** argv)
+setparam(cstring_t* argv)
 {
-	char** newparam;
-	char** ap;
-	int nparam;
+	cstring_t* newparam;
+	cstring_t* ap;
+	int32_t nparam;
 	for (nparam = 0 ; argv[nparam] ; nparam++);
 	ap = newparam = ckmalloc((nparam + 1) * sizeof * ap);
 	while (*argv)
@@ -352,7 +354,7 @@ setparam(char** argv)
 void
 freeparam(struct shparam* param)
 {
-	char** ap;
+	cstring_t* ap;
 	if (param->malloc)
 	{
 		for (ap = param->p ; *ap ; ap++)
@@ -367,11 +369,11 @@ freeparam(struct shparam* param)
  * The shift builtin command.
  */
 
-int
-shiftcmd(int argc, char** argv)
+int32_t
+shiftcmd(int32_t argc, cstring_t* argv)
 {
-	int n;
-	char** ap1, **ap2;
+	int32_t n;
+	cstring_t* ap1, **ap2;
 	n = 1;
 	if (argc > 1)
 		n = number(argv[1]);
@@ -397,8 +399,8 @@ shiftcmd(int argc, char** argv)
  * The set command builtin.
  */
 
-int
-setcmd(int argc, char** argv)
+int32_t
+setcmd(int32_t argc, cstring_t* argv)
 {
 	if (argc == 1)
 		return showvarscmd(argc, argv);
@@ -415,7 +417,7 @@ setcmd(int argc, char** argv)
 
 
 void
-getoptsreset(const char* value)
+getoptsreset(const_cstring_t value)
 {
 	while (*value == '0')
 		value++;
@@ -430,12 +432,12 @@ getoptsreset(const char* value)
  * then it's the first time getopts has been called.
  */
 
-int
-getoptscmd(int argc, char** argv)
+int32_t
+getoptscmd(int32_t argc, cstring_t* argv)
 {
-	char** optbase = NULL;
+	cstring_t* optbase = NULL;
 	if (argc < 3)
-		error("usage: getopts optstring var [arg]");
+		sherror("usage: getopts optstring var [arg]");
 	else if (argc == 3)
 		optbase = shellparam.p;
 	else
@@ -450,17 +452,19 @@ getoptscmd(int argc, char** argv)
 				   &shellparam.optptr);
 }
 
-static int
-getopts(char* optstr, char* optvar, char** optfirst, char** *optnext,
-		char** optptr)
+static int32_t
+getopts(cstring_t optstr, cstring_t optvar, cstring_t* optfirst, cstring_t** optnext,
+		cstring_t* optptr)
 {
-	char* p, *q;
-	char c = '?';
-	int done = 0;
-	int ind = 0;
-	int err = 0;
+	cstring_t p;
+	cstring_t q;
+	char32_t c = '?';
+	int32_t done = 0;
+	int32_t ind = 0;
+	int32_t err = 0;
 	char s[10];
-	const char* optarg = NULL;
+	const_cstring_t optarg = NULL;
+
 	if ((p = *optptr) == NULL || *p == '\0')
 	{
 		/* Current word is done, advance */
@@ -556,11 +560,11 @@ out:
  * end of input.
  */
 
-int
-nextopt(const char* optstring)
+int32_t
+nextopt(const_cstring_t optstring)
 {
-	char* p;
-	const char* q;
+	cstring_t p;
+	const_cstring_t q;
 	char c;
 	if ((p = nextopt_optptr) == NULL || *p == '\0')
 	{
@@ -575,14 +579,14 @@ nextopt(const char* optstring)
 	for (q = optstring ; *q != c ;)
 	{
 		if (*q == '\0')
-			error("Illegal option -%c", c);
+			sherror("Illegal option -%c", c);
 		if (*++q == ':')
 			q++;
 	}
 	if (*++q == ':')
 	{
 		if (*p == '\0' && (p = *argptr++) == NULL)
-			error("No arg for -%c option", c);
+			sherror("No arg for -%c option", c);
 		shoptarg = p;
 		p = NULL;
 	}

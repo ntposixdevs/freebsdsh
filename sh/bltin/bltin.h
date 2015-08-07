@@ -39,12 +39,15 @@
  * routines to ash routines using defines.
  */
 
-#include <unistd.h>
+//#include <unistd.h>
 
 #include "../shell.h"
 #include "../mystring.h"
 #include "../output.h"
-#include "builtins.h"
+#include "../builtins.h"
+#include "../sherror.h"
+#include "../options.h"
+
 #define FILE struct output
 #undef stdout
 #define stdout out1
@@ -64,8 +67,8 @@
 #define warn(fmt, ...) warning(fmt ": %s", __VA_ARGS__, strerror(errno))
 #define errx(exitstatus, ...) error(__VA_ARGS__)
 
-pointer stalloc(int);
-void error(const char*, ...) __printf0like(1, 2);
-int killjob(const char*, int);
+//pvoid_t stalloc(size_t);
+//void error(const_cstring_t, ...) __printf0like(1, 2);
+//int32_t killjob(const_cstring_t, int32_t);
 
-extern char* commandname;
+//extern cstring_t commandname;

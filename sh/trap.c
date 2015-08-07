@@ -47,7 +47,7 @@
 #include "syntax.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "trap.h"
 #include "mystring.h"
 #include "builtins.h"
@@ -69,17 +69,17 @@
 static char sigmode[NSIG];	/* current value of signal */
 volatile sig_atomic_t pendingsig;	/* indicates some signal received */
 volatile sig_atomic_t pendingsig_waitcmd;	/* indicates SIGINT/SIGQUIT received */
-int in_dotrap;			/* do we execute in a trap handler? */
-static char* volatile trap[NSIG];	/* trap handler commands */
+int32_t in_dotrap;			/* do we execute in a trap handler? */
+static cstring_t volatile trap[NSIG];	/* trap handler commands */
 static volatile sig_atomic_t gotsig[NSIG];
 /* indicates specified signal received */
-static int ignore_sigchld;	/* Used while handling SIGCHLD traps. */
-static int last_trapsig;
+static int32_t ignore_sigchld;	/* Used while handling SIGCHLD traps. */
+static int32_t last_trapsig;
 
-static int exiting;		/* exitshell() has been called */
-static int exiting_exitstatus;	/* value passed to exitshell() */
+static int32_t exiting;		/* exitshell() has been called */
+static int32_t exiting_exitstatus;	/* value passed to exitshell() */
 
-static int getsigaction(int, sig_t*);
+static int32_t getsigaction(int32_t, sig_t*);
 
 
 /*
@@ -87,12 +87,12 @@ static int getsigaction(int, sig_t*);
  *
  * Note: the signal number may exceed NSIG.
  */
-static int
-sigstring_to_signum(char* sig)
+static int32_t
+sigstring_to_signum(cstring_t sig)
 {
 	if (is_number(sig))
 	{
-		int signo;
+		int32_t signo;
 		signo = atoi(sig);
 		return ((signo >= 0 && signo < NSIG) ? signo : (-1));
 	}
@@ -102,7 +102,7 @@ sigstring_to_signum(char* sig)
 	}
 	else
 	{
-		int n;
+		int32_t n;
 		if (strncasecmp(sig, "SIG", 3) == 0)
 			sig += 3;
 		for (n = 1; n < sys_nsig; n++)
@@ -120,7 +120,7 @@ sigstring_to_signum(char* sig)
 static void
 printsignals(void)
 {
-	int n, outlen;
+	int32_t n, outlen;
 	outlen = 0;
 	for (n = 1; n < sys_nsig; n++)
 	{
@@ -151,13 +151,13 @@ printsignals(void)
 /*
  * The trap builtin.
  */
-int
-trapcmd(int argc __unused, char** argv)
+int32_t
+trapcmd(int32_t argc __unused, cstring_t* argv)
 {
-	char* action;
-	int signo;
-	int errors = 0;
-	int i;
+	cstring_t action;
+	int32_t signo;
+	int32_t errors = 0;
+	int32_t i;
 	while ((i = nextopt("l")) != '\0')
 	{
 		switch (i)
@@ -231,7 +231,7 @@ trapcmd(int argc __unused, char** argv)
 void
 clear_traps(void)
 {
-	char* volatile* tp;
+	cstring_t volatile* tp;
 	for (tp = trap ; tp <= &trap[NSIG - 1] ; tp++)
 	{
 		if (*tp &&** tp)  	/* trap not NULL or SIG_IGN */
@@ -250,10 +250,10 @@ clear_traps(void)
 /*
  * Check if we have any traps enabled.
  */
-int
+int32_t
 have_traps(void)
 {
-	char* volatile* tp;
+	cstring_t volatile* tp;
 	for (tp = trap ; tp <= &trap[NSIG - 1] ; tp++)
 	{
 		if (*tp &&** tp)	/* trap not NULL or SIG_IGN */
@@ -267,12 +267,12 @@ have_traps(void)
  * out what it should be set to.
  */
 void
-setsignal(int signo)
+setsignal(int32_t signo)
 {
-	int action;
+	int32_t action;
 	sig_t sigact = SIG_DFL;
 	struct sigaction sa;
-	char* t;
+	cstring_t t;
 	if ((t = trap[signo]) == NULL)
 		action = S_DFL;
 	else if (*t != '\0')
@@ -289,7 +289,7 @@ setsignal(int signo)
 			case SIGQUIT:
 #ifdef DEBUG
 			{
-				extern int debug;
+				extern int32_t debug;
 				if (debug)
 					break;
 			}
@@ -364,8 +364,8 @@ setsignal(int signo)
 /*
  * Return the current setting for sig w/o changing it.
  */
-static int
-getsigaction(int signo, sig_t* sigact)
+static int32_t
+getsigaction(int32_t signo, sig_t* sigact)
 {
 	struct sigaction sa;
 	if (sigaction(signo, (struct sigaction*)0, &sa) == -1)
@@ -379,7 +379,7 @@ getsigaction(int signo, sig_t* sigact)
  * Ignore a signal.
  */
 void
-ignoresig(int signo)
+ignoresig(int32_t signo)
 {
 	if (sigmode[signo] == 0)
 		setsignal(signo);
@@ -391,7 +391,7 @@ ignoresig(int signo)
 }
 
 
-int
+int32_t
 issigchldtrapped(void)
 {
 	return (trap[SIGCHLD] != NULL && *trap[SIGCHLD] != '\0');
@@ -402,7 +402,7 @@ issigchldtrapped(void)
  * Signal handler.
  */
 void
-onsig(int signo)
+onsig(int32_t signo)
 {
 	if (signo == SIGINT && trap[SIGINT] == NULL)
 	{
@@ -428,8 +428,8 @@ onsig(int signo)
 void
 dotrap(void)
 {
-	int i;
-	int savestatus, prev_evalskip, prev_skipcount;
+	int32_t i;
+	int32_t savestatus, prev_evalskip, prev_skipcount;
 	in_dotrap++;
 	for (;;)
 	{
@@ -494,9 +494,9 @@ dotrap(void)
  * Controls whether the shell is interactive or not.
  */
 void
-setinteractive(int on)
+setinteractive(int32_t on)
 {
-	static int is_interactive = -1;
+	static int32_t is_interactive = -1;
 	if (on == is_interactive)
 		return;
 	setsignal(SIGINT);
@@ -510,7 +510,7 @@ setinteractive(int on)
  * Called to exit the shell.
  */
 void
-exitshell(int status)
+exitshell(int32_t status)
 {
 	TRACE(("exitshell(%d) pid=%d\n", status, getpid()));
 	exiting = 1;
@@ -522,8 +522,8 @@ void
 exitshell_savedstatus(void)
 {
 	struct jmploc loc1, loc2;
-	char* p;
-	int sig = 0;
+	cstring_t p;
+	int32_t sig = 0;
 	sigset_t sigs;
 	if (!exiting)
 	{

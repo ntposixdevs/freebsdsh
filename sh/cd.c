@@ -51,7 +51,7 @@
 #include "options.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "exec.h"
 #include "redir.h"
 #include "mystring.h"
@@ -59,29 +59,31 @@
 #include "cd.h"
 #include "builtins.h"
 
-static int cdlogical(char*);
-static int cdphysical(char*);
-static int docd(char*, int, int);
-static char* getcomponent(void);
-static char* findcwd(char*);
-static void updatepwd(char*);
-static char* getpwd(void);
-static char* getpwd2(void);
+static int32_t cdlogical(cstring_t);
+static int32_t cdphysical(cstring_t);
+static int32_t docd(cstring_t, int32_t, int32_t);
+static cstring_t getcomponent(void);
+static cstring_t findcwd(cstring_t);
+static void updatepwd(cstring_t);
+static cstring_t getpwd(void);
+static cstring_t getpwd2(void);
 
-static char* curdir = NULL;	/* current working directory */
-static char* prevdir;		/* previous working directory */
-static char* cdcomppath;
+static cstring_t curdir = NULL;	/* current working directory */
+static cstring_t prevdir;		/* previous working directory */
+static cstring_t cdcomppath;
 
-int
-cdcmd(int argc __unused, char** argv __unused)
+int32_t
+cdcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	const char* dest;
-	const char* path;
-	char* p;
+	const_cstring_t dest;
+	const_cstring_t path;
+	cstring_t p;
 	struct stat statb;
-	int ch, phys, print = 0, getcwderr = 0;
-	int rc;
-	int errno1 = ENOENT;
+	int32_t ch, phys, print = 0, getcwderr = 0;
+	int32_t rc;
+	int32_t errno1 = ENOENT;
+	(void)argc; (void)argv;
+
 	phys = Pflag;
 	while ((ch = nextopt("eLP")) != '\0')
 	{
@@ -99,9 +101,9 @@ cdcmd(int argc __unused, char** argv __unused)
 		}
 	}
 	if (*argptr != NULL && argptr[1] != NULL)
-		error("too many arguments");
+		sherror("too many arguments");
 	if ((dest = *argptr) == NULL && (dest = bltinlookup("HOME", 1)) == NULL)
-		error("HOME not set");
+		sherror("HOME not set");
 	if (*dest == '\0')
 		dest = ".";
 	if (dest[0] == '-' && dest[1] == '\0')
@@ -145,8 +147,8 @@ cdcmd(int argc __unused, char** argv __unused)
 				errno1 = errno;
 		}
 	}
-	error("%s: %s", dest, strerror(errno1));
-	/*NOTREACHED*/
+	sherror("%s: %s", dest, strerror(errno1));
+	NOTREACHED;	// this is bad
 	return 0;
 }
 
@@ -155,10 +157,10 @@ cdcmd(int argc __unused, char** argv __unused)
  * Actually change the directory.  In an interactive shell, print the
  * directory name if "print" is nonzero.
  */
-static int
-docd(char* dest, int print, int phys)
+static int32_t
+docd(cstring_t dest, int32_t print, int32_t phys)
 {
-	int rc;
+	int32_t rc;
 	TRACE(("docd(\"%s\", %d, %d) called\n", dest, print, phys));
 	/* If logical cd fails, fall back to physical. */
 	if ((phys || (rc = cdlogical(dest)) < 0) && (rc = cdphysical(dest)) < 0)
@@ -168,15 +170,15 @@ docd(char* dest, int print, int phys)
 	return (rc);
 }
 
-static int
-cdlogical(char* dest)
+static int32_t
+cdlogical(cstring_t dest)
 {
-	char* p;
-	char* q;
-	char* component;
+	cstring_t p;
+	cstring_t q;
+	cstring_t component;
 	struct stat statb;
-	int first;
-	int badstat;
+	int32_t first;
+	int32_t badstat;
 	size_t len;
 	/*
 	 *  Check each component of the path. If we find a symlink or
@@ -223,11 +225,11 @@ cdlogical(char* dest)
 	return (0);
 }
 
-static int
-cdphysical(char* dest)
+static int32_t
+cdphysical(cstring_t dest)
 {
-	char* p;
-	int rc = 0;
+	cstring_t p;
+	int32_t rc = 0;
 	INTOFF;
 	if (chdir(dest) < 0)
 	{
@@ -249,11 +251,11 @@ cdphysical(char* dest)
  * Get the next component of the path name pointed to by cdcomppath.
  * This routine overwrites the string pointed to by cdcomppath.
  */
-static char*
+static cstring_t
 getcomponent(void)
 {
-	char* p;
-	char* start;
+	cstring_t p;
+	cstring_t start;
 	if ((p = cdcomppath) == NULL)
 		return NULL;
 	start = cdcomppath;
@@ -272,11 +274,11 @@ getcomponent(void)
 }
 
 
-static char*
-findcwd(char* dir)
+static cstring_t
+findcwd(cstring_t dir)
 {
-	char* new;
-	char* p;
+	cstring_t newdir;
+	cstring_t p;
 	size_t len;
 	/*
 	 * If our argument is NULL, we don't know the current directory
@@ -288,28 +290,28 @@ findcwd(char* dir)
 	len = strlen(dir);
 	cdcomppath = stalloc(len + 1);
 	memcpy(cdcomppath, dir, len + 1);
-	STARTSTACKSTR(new);
+	STARTSTACKSTR(newdir);
 	if (*dir != '/')
 	{
-		STPUTS(curdir, new);
-		if (STTOPC(new) == '/')
-			STUNPUTC(new);
+		STPUTS(curdir, newdir);
+		if (STTOPC(newdir) == '/')
+			STUNPUTC(newdir);
 	}
 	while ((p = getcomponent()) != NULL)
 	{
 		if (equal(p, ".."))
 		{
-			while (new > stackblock() && (STUNPUTC(new), *new) != '/');
+			while (newdir > stackblock() && (STUNPUTC(newdir), *newdir) != '/');
 		}
 		else if (*p != '\0' && ! equal(p, "."))
 		{
-			STPUTC('/', new);
-			STPUTS(p, new);
+			STPUTC('/', newdir);
+			STPUTS(p, newdir);
 		}
 	}
-	if (new == stackblock())
-		STPUTC('/', new);
-	STACKSTRNUL(new);
+	if (newdir == stackblock())
+		STPUTC('/', newdir);
+	STACKSTRNUL(newdir);
 	return stackblock();
 }
 
@@ -319,7 +321,7 @@ findcwd(char* dir)
  * that the current directory has changed.
  */
 static void
-updatepwd(char* dir)
+updatepwd(cstring_t dir)
 {
 	hashcd();				/* update command hash table */
 	if (prevdir)
@@ -330,11 +332,13 @@ updatepwd(char* dir)
 	setvar("OLDPWD", prevdir, VEXPORT);
 }
 
-int
-pwdcmd(int argc __unused, char** argv __unused)
+int32_t
+pwdcmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	char* p;
-	int ch, phys;
+	cstring_t p;
+	int32_t ch, phys;
+	(void)argc; (void)argv;
+
 	phys = Pflag;
 	while ((ch = nextopt("LP")) != '\0')
 	{
@@ -349,7 +353,7 @@ pwdcmd(int argc __unused, char** argv __unused)
 		}
 	}
 	if (*argptr != NULL)
-		error("too many arguments");
+		sherror("too many arguments");
 	if (!phys && getpwd())
 	{
 		out1str(curdir);
@@ -358,7 +362,7 @@ pwdcmd(int argc __unused, char** argv __unused)
 	else
 	{
 		if ((p = getpwd2()) == NULL)
-			error(".: %s", strerror(errno));
+			sherror(".: %s", strerror(errno));
 		out1str(p);
 		out1c('\n');
 	}
@@ -368,10 +372,10 @@ pwdcmd(int argc __unused, char** argv __unused)
 /*
  * Get the current directory and cache the result in curdir.
  */
-static char*
+static cstring_t
 getpwd(void)
 {
-	char* p;
+	cstring_t p;
 	if (curdir)
 		return curdir;
 	p = getpwd2();
@@ -385,11 +389,11 @@ getpwd(void)
 /*
  * Return the current directory.
  */
-static char*
+static cstring_t
 getpwd2(void)
 {
-	char* pwd;
-	int i;
+	cstring_t pwd;
+	size_t i;
 	for (i = MAXPWD;; i *= 2)
 	{
 		pwd = stalloc(i);
@@ -407,9 +411,9 @@ getpwd2(void)
  * If the shell is interactive, we need to warn if this fails.
  */
 void
-pwd_init(int warn)
+pwd_init(int32_t warn)
 {
-	char* pwd;
+	cstring_t pwd;
 	struct stat stdot, stpwd;
 	pwd = lookupvar("PWD");
 	if (pwd && *pwd == '/' && stat(".", &stdot) != -1 &&

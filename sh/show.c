@@ -47,11 +47,11 @@
 
 
 #ifdef DEBUG
-static void shtree(union node*, int, char*, FILE*);
+static void shtree(union node*, int32_t, cstring_t, FILE*);
 static void shcmd(union node*, FILE*);
 static void sharg(union node*, FILE*);
-static void indent(int, char*, FILE*);
-static void trstring(char*);
+static void indent(int32_t, cstring_t, FILE*);
+static void trstring(cstring_t);
 
 
 void
@@ -63,10 +63,10 @@ showtree(union node* n)
 
 
 static void
-shtree(union node* n, int ind, char* pfx, FILE* fp)
+shtree(union node* n, int32_t ind, cstring_t pfx, FILE* fp)
 {
 	struct nodelist* lp;
-	char* s;
+	cstring_t s;
 	if (n == NULL)
 		return;
 	indent(ind, pfx, fp);
@@ -117,9 +117,9 @@ static void
 shcmd(union node* cmd, FILE* fp)
 {
 	union node* np;
-	int first;
-	char* s;
-	int dftfd;
+	int32_t first;
+	cstring_t s;
+	int32_t dftfd;
 	first = 1;
 	for (np = cmd->ncmd.args ; np ; np = np->narg.next)
 	{
@@ -206,9 +206,9 @@ shcmd(union node* cmd, FILE* fp)
 static void
 sharg(union node* arg, FILE* fp)
 {
-	char* p;
+	cstring_t p;
 	struct nodelist* bqlist;
-	int subtype;
+	int32_t subtype;
 	if (arg->type != NARG)
 	{
 		printf("<node type %d>\n", arg->type);
@@ -289,9 +289,9 @@ sharg(union node* arg, FILE* fp)
 
 
 static void
-indent(int amount, char* pfx, FILE* fp)
+indent(int32_t amount, cstring_t pfx, FILE* fp)
 {
-	int i;
+	int32_t i;
 	for (i = 0 ; i < amount ; i++)
 	{
 		if (pfx && i == amount - 1)
@@ -309,14 +309,14 @@ indent(int amount, char* pfx, FILE* fp)
 FILE* tracefile;
 
 #if DEBUG >= 2
-int debug = 1;
+int32_t debug = 1;
 #else
-int debug = 0;
+int32_t debug = 0;
 #endif
 
 
 void
-trputc(int c)
+trputc(int32_t c)
 {
 	if (tracefile == NULL)
 		return;
@@ -327,7 +327,7 @@ trputc(int c)
 
 
 void
-sh_trace(const char* fmt, ...)
+sh_trace(const_cstring_t fmt, ...)
 {
 	va_list va;
 	va_start(va, fmt);
@@ -342,7 +342,7 @@ sh_trace(const char* fmt, ...)
 
 
 void
-trputs(const char* s)
+trputs(const_cstring_t s)
 {
 	if (tracefile == NULL)
 		return;
@@ -353,9 +353,9 @@ trputs(const char* s)
 
 
 static void
-trstring(char* s)
+trstring(cstring_t s)
 {
-	char* p;
+	cstring_t p;
 	char c;
 	if (tracefile == NULL)
 		return;
@@ -416,7 +416,7 @@ backslash:
 
 
 void
-trargs(char** ap)
+trargs(cstring_t* ap)
 {
 	if (tracefile == NULL)
 		return;
@@ -436,12 +436,12 @@ void
 opentrace(void)
 {
 	char s[100];
-	int flags;
+	int32_t flags;
 	if (!debug)
 		return;
 #ifdef not_this_way
 	{
-		char* p;
+		cstring_t p;
 		if ((p = getenv("HOME")) == NULL)
 		{
 			if (geteuid() == 0)

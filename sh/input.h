@@ -40,26 +40,22 @@
  * and restores it when files are pushed and popped.  The user of this
  * package must set its value.
  */
-extern int plinno;
-extern int parsenleft;		/* number of characters left in input buffer */
-extern const char* parsenextc;	/* next character in input buffer */
 
 struct alias;
 struct parsefile;
 
 void resetinput(void);
-int pgetc(void);
-int preadbuffer(void);
-int preadateof(void);
+int32_t pgetc(void);
+int32_t preadbuffer(void);
+int32_t preadateof(void);
 void pungetc(void);
-void pushstring(const char*, int, struct alias*);
-void setinputfile(const char*, int);
-void setinputfd(int, int);
-void setinputstring(const char*, int);
+void pushstring(const_cstring_t, size_t len, struct alias*);
+void setinputfile(const_cstring_t, int32_t);
+void setinputfd(int32_t, int32_t);
+void setinputstring(const_cstring_t, int32_t);
 void popfile(void);
 struct parsefile* getcurrentfile(void);
 void popfilesupto(struct parsefile*);
 void popallfiles(void);
 void closescript(void);
-
-#define pgetc_macro()	(--parsenleft >= 0? *parsenextc++ : preadbuffer())
+int32_t pgetc(void);

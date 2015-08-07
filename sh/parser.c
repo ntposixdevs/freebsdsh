@@ -46,7 +46,7 @@
 #include "input.h"
 #include "output.h"
 #include "var.h"
-#include "error.h"
+#include "sherror.h"
 #include "memalloc.h"
 #include "mystring.h"
 #include "alias.h"
@@ -77,54 +77,54 @@ struct heredoc
 {
 	struct heredoc* next;	/* next here document in list */
 	union node* here;		/* redirection node */
-	char* eofmark;		/* string indicating end of input */
-	int striptabs;		/* if set, strip leading tabs */
+	cstring_t eofmark;		/* string indicating end of input */
+	int32_t striptabs;		/* if set, strip leading tabs */
 };
 
 struct parser_temp
 {
 	struct parser_temp* next;
-	void* data;
+	pvoid_t data;
 };
 
 
 static struct heredoc* heredoclist;	/* list of here documents to read */
-static int doprompt;		/* if set, prompt the user */
-static int needprompt;		/* true if interactive and at start of line */
-static int lasttoken;		/* last token read */
-static int tokpushback;		/* last token pushed back */
-static char* wordtext;		/* text of last word returned by readtoken */
-static int checkkwd;
+static int32_t doprompt;		/* if set, prompt the user */
+static int32_t needprompt;		/* true if interactive and at start of line */
+static int32_t lasttoken;		/* last token read */
+static int32_t tokpushback;		/* last token pushed back */
+static cstring_t wordtext;		/* text of last word returned by readtoken */
+static int32_t checkkwd;
 static struct nodelist* backquotelist;
 static union node* redirnode;
 static struct heredoc* heredoc;
-static int quoteflag;		/* set if (part of) last token was quoted */
-static int startlinno;		/* line # where last token started */
-static int funclinno;		/* line # where the current function started */
+static int32_t quoteflag;		/* set if (part of) last token was quoted */
+static int32_t startlinno;		/* line # where last token started */
+static int32_t funclinno;		/* line # where the current function started */
 static struct parser_temp* parser_temp;
 
 
-static union node* list(int);
+static union node* list(int32_t);
 static union node* andor(void);
 static union node* pipeline(void);
 static union node* command(void);
 static union node* simplecmd(union node**, union node*);
 static union node* makename(void);
-static union node* makebinary(int type, union node* n1, union node* n2);
+static union node* makebinary(int32_t type, union node* n1, union node* n2);
 static void parsefname(void);
 static void parseheredoc(void);
-static int peektoken(void);
-static int readtoken(void);
-static int xxreadtoken(void);
-static int readtoken1(int, const char*, const char*, int);
-static int noexpand(char*);
-static void consumetoken(int);
-static void synexpect(int) __dead2;
-static void synerror(const char*) __dead2;
-static void setprompt(int);
+static int32_t peektoken(void);
+static int32_t readtoken(void);
+static int32_t xxreadtoken(void);
+static int32_t readtoken1(int32_t, const_cstring_t, const_cstring_t, int32_t);
+static int32_t noexpand(cstring_t);
+static void consumetoken(int32_t);
+DECLSPEC_NORETURN static void synexpect(int32_t);
+DECLSPEC_NORETURN static void synerror(const_cstring_t);
+static void setprompt(int32_t);
 
 
-static void*
+static pvoid_t
 parser_temp_alloc(size_t len)
 {
 	struct parser_temp* t;
@@ -139,14 +139,14 @@ parser_temp_alloc(size_t len)
 }
 
 
-static void*
-parser_temp_realloc(void* ptr, size_t len)
+static pvoid_t
+parser_temp_realloc(pvoid_t ptr, size_t len)
 {
 	struct parser_temp* t;
 	INTOFF;
 	t = parser_temp;
 	if (ptr != t->data)
-		error("bug: parser_temp_realloc misused");
+		sherror("bug: parser_temp_realloc misused");
 	t->data = ckrealloc(t->data, len);
 	INTON;
 	return t->data;
@@ -154,10 +154,10 @@ parser_temp_realloc(void* ptr, size_t len)
 
 
 static void
-parser_temp_free_upto(void* ptr)
+parser_temp_free_upto(pvoid_t ptr)
 {
 	struct parser_temp* t;
-	int done = 0;
+	int32_t done = 0;
 	INTOFF;
 	while (parser_temp != NULL && !done)
 	{
@@ -169,7 +169,7 @@ parser_temp_free_upto(void* ptr)
 	}
 	INTON;
 	if (!done)
-		error("bug: parser_temp_free_upto misused");
+		sherror("bug: parser_temp_free_upto misused");
 }
 
 
@@ -195,9 +195,9 @@ parser_temp_free_all(void)
  */
 
 union node*
-		parsecmd(int interact)
+		parsecmd(int32_t interact)
 {
-	int t;
+	int32_t t;
 	/* This assumes the parser is not re-entered,
 	 * which could happen if we add command substitution on PS1/PS2.
 	 */
@@ -222,10 +222,10 @@ union node*
 
 
 static union node*
-		list(int nlflag)
+		list(int32_t nlflag)
 {
 	union node* ntop, *n1, *n2, *n3;
-	int tok;
+	int32_t tok;
 	checkkwd = CHKNL | CHKKWD | CHKALIAS;
 	if (!nlflag && tokendlist[peektoken()])
 		return NULL;
@@ -313,7 +313,7 @@ static union node*
 		andor(void)
 {
 	union node* n;
-	int t;
+	int32_t t;
 	n = pipeline();
 	for (;;)
 	{
@@ -341,7 +341,7 @@ static union node*
 {
 	union node* n1, *n2, *pipenode;
 	struct nodelist* lp, *prev;
-	int negate, t;
+	int32_t negate, t;
 	negate = 0;
 	checkkwd = CHKNL | CHKKWD | CHKALIAS;
 	TRACE(("pipeline: entered\n"));
@@ -395,8 +395,8 @@ static union node*
 	union node* ap, **app;
 	union node* cp, **cpp;
 	union node* redir, **rpp;
-	int t;
-	int is_subshell;
+	int32_t t;
+	int32_t is_subshell;
 	checkkwd = CHKNL | CHKKWD | CHKALIAS;
 	is_subshell = 0;
 	redir = NULL;
@@ -612,8 +612,8 @@ static union node*
 	union node* args, **app;
 	union node** orig_rpp = rpp;
 	union node* n = NULL;
-	int special;
-	int savecheckkwd;
+	int32_t special;
+	int32_t savecheckkwd;
 	/* If we don't have any redirections already, then we must reset */
 	/* rpp to be the address of the local redir variable.  */
 	if (redir == 0)
@@ -698,7 +698,7 @@ static union node*
 }
 
 static union node*
-		makebinary(int type, union node* n1, union node* n2)
+		makebinary(int32_t type, union node* n1, union node* n2)
 {
 	union node* n;
 	n = (union node*)stalloc(sizeof(struct nbinary));
@@ -715,7 +715,7 @@ forcealias(void)
 }
 
 void
-fixredir(union node* n, const char* text, int err)
+fixredir(union node* n, const_cstring_t text, int32_t err)
 {
 	TRACE(("Fix redir %s %d\n", text, err));
 	if (!err)
@@ -800,22 +800,22 @@ parseheredoc(void)
 	}
 }
 
-static int
+static int32_t
 peektoken(void)
 {
-	int t;
+	int32_t t;
 	t = readtoken();
 	tokpushback++;
 	return (t);
 }
 
-static int
+static int32_t
 readtoken(void)
 {
-	int t;
+	int32_t t;
 	struct alias* ap;
 #ifdef DEBUG
-	int alreadyseen = tokpushback;
+	int32_t alreadyseen = tokpushback;
 #endif
 top:
 	t = xxreadtoken();
@@ -835,7 +835,7 @@ top:
 	 */
 	if (t == TWORD && !quoteflag)
 	{
-		const char* const* pp;
+		const_cstring_t const* pp;
 		if (checkkwd & CHKKWD)
 			for (pp = parsekwd; *pp; pp++)
 			{
@@ -886,10 +886,10 @@ out:
 
 #define RETURN(token)	return lasttoken = token
 
-static int
+static int32_t
 xxreadtoken(void)
 {
-	int c;
+	int32_t c;
 	if (tokpushback)
 	{
 		tokpushback = 0;
@@ -903,7 +903,7 @@ xxreadtoken(void)
 	startlinno = plinno;
 	for (;;)  	/* until token or start of word found */
 	{
-		c = pgetc_macro();
+		c = pgetc();	/* in input.c */
 		switch (c)
 		{
 			case ' ':
@@ -958,7 +958,7 @@ xxreadtoken(void)
 		}
 	}
 breakloop:
-	return readtoken1(c, BASESYNTAX, (char*)NULL, 0);
+	return readtoken1(c, BASESYNTAX, (cstring_t)NULL, 0);
 #undef RETURN
 }
 
@@ -966,8 +966,8 @@ breakloop:
 #define MAXNEST_static 8
 struct tokenstate
 {
-	const char* syntax; /* *SYNTAX */
-	int parenlevel; /* levels of parentheses in arithmetic */
+	const_cstring_t syntax; /* *SYNTAX */
+	int32_t parenlevel; /* levels of parentheses in arithmetic */
 	enum tokenstate_category
 	{
 		TSTATE_TOP,
@@ -985,8 +985,8 @@ struct tokenstate
  * The new value of c is returned.
  */
 
-static int
-checkend(int c, const char* eofmark, int striptabs)
+static int32_t
+checkend(int32_t c, const_cstring_t eofmark, int32_t striptabs)
 {
 	if (striptabs)
 	{
@@ -995,8 +995,8 @@ checkend(int c, const char* eofmark, int striptabs)
 	}
 	if (c == *eofmark)
 	{
-		int c2;
-		const char* q;
+		int32_t c2;
+		const_cstring_t q;
 		for (q = eofmark + 1; c2 = pgetc(), *q != '\0' && c2 == *q; q++)
 			;
 		if ((c2 == PEOF || c2 == '\n') && *q == '\0')
@@ -1022,19 +1022,19 @@ checkend(int c, const char* eofmark, int striptabs)
  * Called to parse command substitutions.
  */
 
-static char*
-parsebackq(char* out, struct nodelist** pbqlist,
-		   int oldstyle, int dblquote, int quoted)
+static cstring_t
+parsebackq(cstring_t out, struct nodelist** pbqlist,
+		   int32_t oldstyle, int32_t dblquote, int32_t quoted)
 {
 	struct nodelist** nlpp;
 	union node* n;
-	char* volatile str;
+	cstring_t volatile str;
 	struct jmploc jmploc;
 	struct jmploc* const savehandler = handler;
 	size_t savelen;
-	int saveprompt;
-	const int bq_startlinno = plinno;
-	char* volatile ostr = NULL;
+	int32_t saveprompt;
+	const int32_t bq_startlinno = plinno;
+	cstring_t volatile ostr = NULL;
 	struct parsefile* const savetopfile = getcurrentfile();
 	struct heredoc* const saveheredoclist = heredoclist;
 	struct heredoc* here;
@@ -1070,9 +1070,9 @@ parsebackq(char* out, struct nodelist** pbqlist,
 		/* We must read until the closing backquote, giving special
 		   treatment to some slashes, and then push the string and
 		   reread it as input, interpreting it normally.  */
-		char* oout;
-		int c;
-		int olen;
+		cstring_t oout;
+		int32_t c;
+		int32_t olen;
 		STARTSTACKSTR(oout);
 		for (;;)
 		{
@@ -1194,10 +1194,10 @@ done:
  * Called to parse a backslash escape sequence inside $'...'.
  * The backslash has already been read.
  */
-static char*
-readcstyleesc(char* out)
+static cstring_t
+readcstyleesc(cstring_t out)
 {
-	int c, v, i, n;
+	int32_t c, v, i, n;
 	c = pgetc();
 	switch (c)
 	{
@@ -1386,22 +1386,22 @@ readcstyleesc(char* out)
 #define PARSESUB()	{goto parsesub; parsesub_return:;}
 #define	PARSEARITH()	{goto parsearith; parsearith_return:;}
 
-static int
-readtoken1(int firstc, char const* initialsyntax, const char* eofmark,
-		   int striptabs)
+static int32_t
+readtoken1(int32_t firstc, char const* initialsyntax, const_cstring_t eofmark,
+		   int32_t striptabs)
 {
-	int c = firstc;
-	char* out;
-	int len;
+	int32_t c = firstc;
+	cstring_t out;
+	size_t len;
 	struct nodelist* bqlist;
-	int quotef;
-	int newvarnest;
-	int level;
-	int synentry;
+	int32_t quotef;
+	int32_t newvarnest;
+	int32_t level;
+	int32_t synentry;
 	struct tokenstate state_static[MAXNEST_static];
-	int maxnest = MAXNEST_static;
+	int32_t maxnest = MAXNEST_static;
 	struct tokenstate* state = state_static;
-	int sqiscstyle = 0;
+	int32_t sqiscstyle = 0;
 	startlinno = plinno;
 	quotef = 0;
 	bqlist = NULL;
@@ -1576,7 +1576,7 @@ loop:  	/* for each line, until end of word */
 						goto endword;	/* exit outer loop */
 					USTPUTC(c, out);
 			}
-			c = pgetc_macro();
+			c = pgetc();	/* input.c */
 		}
 	}
 endword:
@@ -1688,15 +1688,15 @@ parseredir:
 parsesub:
 	{
 		char buf[10];
-		int subtype;
-		int typeloc;
-		int flags;
-		char* p;
+		int32_t subtype;
+		int32_t typeloc;
+		int32_t flags;
+		cstring_t p;
 		static const char types[] = "}-+?=";
-		int bracketed_name = 0; /* used to handle ${[0-9]*} variables */
-		int linno;
-		int length;
-		int c1;
+		int32_t bracketed_name = 0; /* used to handle ${[0-9]*} variables */
+		int32_t linno;
+		int32_t length;
+		int32_t c1;
 		c = pgetc();
 		if (c == '(')  	/* $(command) or $((arith)) */
 		{
@@ -1829,7 +1829,7 @@ varname:
 					case '%':
 					case '#':
 					{
-						int cc = c;
+						int32_t cc = c;
 						subtype = c == '#' ? VSTRIMLEFT :
 								  VSTRIMRIGHT;
 						c = pgetc();
@@ -1946,10 +1946,10 @@ parsearith:
  * or backquotes).
  */
 
-static int
-noexpand(char* text)
+static int32_t
+noexpand(cstring_t text)
 {
-	char* p;
+	cstring_t p;
 	char c;
 	p = text;
 	while ((c = *p++) != '\0')
@@ -1958,7 +1958,7 @@ noexpand(char* text)
 			continue;
 		if (c == CTLESC)
 			p++;
-		else if (BASESYNTAX[(int)c] == CCTL)
+		else if (BASESYNTAX[(int32_t)c] == CCTL)
 			return 0;
 	}
 	return 1;
@@ -1970,10 +1970,10 @@ noexpand(char* text)
  * underscore followed by zero or more letters, underscores, and digits).
  */
 
-int
-goodname(const char* name)
+int32_t
+goodname(const_cstring_t name)
 {
-	const char* p;
+	const_cstring_t p;
 	p = name;
 	if (! is_name(*p))
 		return 0;
@@ -1986,8 +1986,8 @@ goodname(const char* name)
 }
 
 
-int
-isassignment(const char* p)
+int32_t
+isassignment(const_cstring_t p)
 {
 	if (!is_name(*p))
 		return 0;
@@ -2004,7 +2004,7 @@ isassignment(const char* p)
 
 
 static void
-consumetoken(int token)
+consumetoken(int32_t token)
 {
 	if (readtoken() != token)
 		synexpect(token);
@@ -2018,7 +2018,7 @@ consumetoken(int token)
  */
 
 static void
-synexpect(int token)
+synexpect(int32_t token)
 {
 	char msg[64];
 	if (token >= 0)
@@ -2035,16 +2035,16 @@ synexpect(int token)
 
 
 static void
-synerror(const char* msg)
+synerror(const_cstring_t msg)
 {
 	if (commandname)
 		outfmt(out2, "%s: %d: ", commandname, startlinno);
 	outfmt(out2, "Syntax error: %s\n", msg);
-	error((char*)NULL);
+	sherror((cstring_t)NULL);
 }
 
 static void
-setprompt(int which)
+setprompt(int32_t which)
 {
 	whichprompt = which;
 #ifndef NO_HISTORY
@@ -2060,13 +2060,13 @@ setprompt(int which)
  * called by editline -- any expansions to the prompt
  *    should be added here.
  */
-char*
-getprompt(void* unused __unused)
+cstring_t
+getprompt(pvoid_t unused __unused)
 {
 	static char ps[PROMPTLEN];
-	const char* fmt;
-	const char* pwd;
-	int i, trim;
+	const_cstring_t fmt;
+	const_cstring_t pwd;
+	int32_t i, trim;
 	static char internal_error[] = "??";
 	/*
 	 * Select prompt format.
@@ -2157,16 +2157,16 @@ getprompt(void* unused __unused)
 }
 
 
-const char*
-expandstr(const char* ps)
+const_cstring_t
+expandstr(const_cstring_t ps)
 {
 	union node n;
 	struct jmploc jmploc;
 	struct jmploc* const savehandler = handler;
-	const int saveprompt = doprompt;
+	const int32_t saveprompt = doprompt;
 	struct parsefile* const savetopfile = getcurrentfile();
 	struct parser_temp* const saveparser_temp = parser_temp;
-	const char* result = NULL;
+	const_cstring_t result = NULL;
 	if (!setjmp(jmploc.loc))
 	{
 		handler = &jmploc;
@@ -2175,7 +2175,7 @@ expandstr(const char* ps)
 		doprompt = 0;
 		readtoken1(pgetc(), DQSYNTAX, "", 0);
 		if (backquotelist != NULL)
-			error("Command substitution not allowed here");
+			sherror("Command substitution not allowed here");
 		n.narg.type = NARG;
 		n.narg.next = NULL;
 		n.narg.text = wordtext;

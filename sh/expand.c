@@ -67,7 +67,7 @@
 #include "input.h"
 #include "output.h"
 #include "memalloc.h"
-#include "error.h"
+#include "sherror.h"
 #include "mystring.h"
 #include "arith.h"
 #include "show.h"
@@ -78,57 +78,65 @@
  * for IFS characters.
  */
 
-struct ifsregion
+typedef struct ifsregion
 {
-	struct ifsregion* next;	/* next region in list */
-	int begoff;		/* offset of start of region */
-	int endoff;		/* offset of end of region */
-	int inquotes;		/* search for nul bytes only */
-};
+	struct ifsregion*   next;       /* next region in list */
+	size_t              begoff;     /* offset of start of region */
+	size_t              endoff;     /* offset of end of region */
+	size_t              inquotes;   /* search for nul bytes only */
+} ifsregion_t;
+typedef ifsregion_t* pifsregion_t;
 
-
-static char* expdest;			/* output of current string */
+static cstring_t expdest;			/* output of current string */
 static struct nodelist* argbackq;	/* list of back quote expressions */
-static struct ifsregion ifsfirst;	/* first struct in list of ifs regions */
-static struct ifsregion* ifslastp;	/* last struct in list */
+static ifsregion_t ifsfirst;	/* first struct in list of ifs regions */
+static pifsregion_t ifslastp;	/* last struct in list */
 static struct arglist exparg;		/* holds expanded arg list */
 
-static char* argstr(char*, int);
-static char* exptilde(char*, int);
-static char* expari(char*);
-static void expbackq(union node*, int, int);
-static int subevalvar(char*, char*, int, int, int, int, int);
-static char* evalvar(char*, int);
-static int varisset(const char*, int);
-static void varvalue(const char*, int, int, int);
-static void recordregion(int, int, int);
-static void removerecordregions(int);
-static void ifsbreakup(char*, struct arglist*);
-static void expandmeta(struct strlist*, int);
-static void expmeta(char*, char*);
-static void addfname(char*);
+static cstring_t argstr(cstring_t, int32_t);
+static cstring_t exptilde(cstring_t, int32_t);
+static cstring_t expari(cstring_t);
+static void expbackq(union node*, int32_t, int32_t);
+static int32_t subevalvar(cstring_t p, cstring_t str, size_t strloc, uint32_t subtype, size_t startloc, uint32_t varflags, uint32_t quotes);
+static cstring_t evalvar(cstring_t, int32_t);
+static int32_t varisset(const_cstring_t, int32_t);
+static void varvalue(const_cstring_t, int32_t, int32_t, int32_t);
+static void recordregion(size_t start, size_t end, size_t inquotes);
+static void removerecordregions(size_t endoff);
+static void ifsbreakup(cstring_t, struct arglist*);
+static void expandmeta(struct strlist*, int32_t);
+static void expmeta(cstring_t, cstring_t);
+static void addfname(cstring_t);
 static struct strlist* expsort(struct strlist*);
-static struct strlist* msort(struct strlist*, int);
-static int patmatch(const char*, const char*, int);
-static char* cvtnum(int, char*);
-static int collate_range_cmp(wchar_t, wchar_t);
+static struct strlist* msort(struct strlist*, size_t len);
+static int32_t patmatch(const_cstring_t, const_cstring_t, int32_t);
+static cstring_t cvtnum(intptr_t num, cstring_t);
+static int32_t collate_range_cmp(char32_t c1, char32_t c2);
 
-static int
-collate_range_cmp(wchar_t c1, wchar_t c2)
+static int32_t
+collate_range_cmp(char32_t c1, char32_t c2)
 {
-	static wchar_t s1[2], s2[2];
-	s1[0] = c1;
-	s2[0] = c2;
-	return (wcscoll(s1, s2));
+	typedef union _nulltermchar {
+		uint64_t	force8;
+		char32_t	char32[2];
+		wchar_t		wchar[sizeof(uint64_t)/sizeof(wchar_t)];
+	} _nulltermchar_t;
+
+	_nulltermchar_t s1;
+	_nulltermchar_t s2;
+	s1.force8 = c1;
+	s2.force8 = c2;
+
+	return (wcscoll(s1.wchar, s2.wchar));
 }
 
-static char*
-stputs_quotes(const char* data, const char* syntax, char* p)
+static cstring_t
+stputs_quotes(const_cstring_t data, const_cstring_t syntax, cstring_t p)
 {
 	while (*data)
 	{
 		CHECKSTRSPACE(2, p);
-		if (syntax[(int)*data] == CCTL)
+		if (syntax[(int32_t)*data] == CCTL)
 			USTPUTC(CTLESC, p);
 		USTPUTC(*data++, p);
 	}
@@ -149,10 +157,10 @@ stputs_quotes(const char* data, const char* syntax, char* p)
  * and will reset the global state for the new call.
  */
 void
-expandarg(union node* arg, struct arglist* arglist, int flag)
+expandarg(union node* arg, struct arglist* arglist, int32_t flag)
 {
 	struct strlist* sp;
-	char* p;
+	cstring_t p;
 	argbackq = arg->narg.backquote;
 	STARTSTACKSTR(expdest);
 	ifsfirst.next = NULL;
@@ -187,7 +195,7 @@ expandarg(union node* arg, struct arglist* arglist, int flag)
 	}
 	while (ifsfirst.next != NULL)
 	{
-		struct ifsregion* ifsp;
+		pifsregion_t ifsp;
 		INTOFF;
 		ifsp = ifsfirst.next->next;
 		ckfree(ifsfirst.next);
@@ -213,14 +221,14 @@ expandarg(union node* arg, struct arglist* arglist, int flag)
  * characters to allow for further processing.
  * If EXP_FULL is set, also preserve CTLQUOTEMARK characters.
  */
-static char*
-argstr(char* p, int flag)
+static cstring_t
+argstr(cstring_t p, int32_t flag)
 {
 	char c;
-	int quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);	/* do CTLESC */
-	int firsteq = 1;
-	int split_lit;
-	int lit_quoted;
+	int32_t quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);	/* do CTLESC */
+	int32_t firsteq = 1;
+	int32_t split_lit;
+	int32_t lit_quoted;
 	split_lit = flag & EXP_SPLIT_LIT;
 	lit_quoted = flag & EXP_LIT_QUOTED;
 	flag &= ~(EXP_SPLIT_LIT | EXP_LIT_QUOTED);
@@ -299,13 +307,13 @@ argstr(char* p, int flag)
  * Perform tilde expansion, placing the result in the stack string and
  * returning the next position in the input string to process.
  */
-static char*
-exptilde(char* p, int flag)
+static cstring_t
+exptilde(cstring_t p, int32_t flag)
 {
 	char c, *startp = p;
 	struct passwd* pw;
-	char* home;
-	int quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
+	cstring_t home;
+	int32_t quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
 	while ((c = *p) != '\0')
 	{
 		switch (c)
@@ -356,7 +364,7 @@ lose:
 
 
 static void
-removerecordregions(int endoff)
+removerecordregions(size_t endoff)
 {
 	if (ifslastp == NULL)
 		return;
@@ -364,7 +372,7 @@ removerecordregions(int endoff)
 	{
 		while (ifsfirst.next != NULL)
 		{
-			struct ifsregion* ifsp;
+			pifsregion_t ifsp;
 			INTOFF;
 			ifsp = ifsfirst.next->next;
 			ckfree(ifsfirst.next);
@@ -385,7 +393,7 @@ removerecordregions(int endoff)
 		ifslastp = ifslastp->next;
 	while (ifslastp->next != NULL)
 	{
-		struct ifsregion* ifsp;
+		pifsregion_t ifsp;
 		INTOFF;
 		ifsp = ifslastp->next->next;
 		ckfree(ifslastp->next);
@@ -400,14 +408,16 @@ removerecordregions(int endoff)
  * Expand arithmetic expression.
  * Note that flag is not required as digits never require CTLESC characters.
  */
-static char*
-expari(char* p)
+static cstring_t
+expari(cstring_t p)
 {
-	char* q, *start;
+	cstring_t q;
+	cstring_t start;
 	arith_t result;
-	int begoff;
-	int quoted;
-	int adj;
+	size_t begoff;
+	int32_t quoted;
+	size_t adj;
+
 	quoted = *p++ == '"';
 	begoff = expdest - stackblock();
 	p = argstr(p, 0);
@@ -420,7 +430,7 @@ expari(char* p)
 	start = stackblock() + begoff;
 	adj = start - expdest;
 	STADJUST(adj, expdest);
-	CHECKSTRSPACE((int)(DIGITS(result) + 1), expdest);
+	CHECKSTRSPACE((int32_t)(DIGITS(result) + 1), expdest);
 	fmtstr(expdest, DIGITS(result), ARITH_FORMAT_STR, result);
 	adj = strlen(expdest);
 	STADJUST(adj, expdest);
@@ -434,20 +444,22 @@ expari(char* p)
  * Perform command substitution.
  */
 static void
-expbackq(union node* cmd, int quoted, int flag)
+expbackq(union node* cmd, int32_t quoted, int32_t flag)
 {
 	struct backcmd in;
-	int i;
-	char buf[128];
-	char* p;
-	char* dest = expdest;
-	struct ifsregion saveifs, *savelastp;
+	ssize_t nreadbytes;
+	char buf[128] = {0};
+	cstring_t p;
+	cstring_t dest = expdest;
+	ifsregion_t saveifs;
+	pifsregion_t savelastp;
 	struct nodelist* saveargbackq;
 	char lastc;
-	int startloc = dest - stackblock();
+	size_t startloc = dest - stackblock();
 	char const* syntax = quoted ? DQSYNTAX : BASESYNTAX;
-	int quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
+	int32_t quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
 	size_t nnl;
+
 	INTOFF;
 	saveifs = ifsfirst;
 	savelastp = ifslastp;
@@ -468,12 +480,12 @@ expbackq(union node* cmd, int quoted, int flag)
 		{
 			if (in.fd < 0)
 				break;
-			while ((i = read(in.fd, buf, sizeof buf)) < 0 && errno == EINTR);
-			TRACE(("expbackq: read returns %d\n", i));
-			if (i <= 0)
+			while ((nreadbytes = read(in.fd, buf, sizeof(buf))) < 0 && errno == EINTR);
+			TRACE(("expbackq: read returns %d\n", nreadbytes));
+			if (nreadbytes <= 0)
 				break;
 			p = buf;
-			in.nleft = i - 1;
+			in.nleft = nreadbytes - 1;
 		}
 		lastc = *p++;
 		if (lastc != '\0')
@@ -490,7 +502,7 @@ expbackq(union node* cmd, int quoted, int flag)
 					nnl--;
 					USTPUTC('\n', dest);
 				}
-				if (quotes && syntax[(int)lastc] == CCTL)
+				if (quotes && syntax[(int32_t)lastc] == CCTL)
 					USTPUTC(CTLESC, dest);
 				USTPUTC(lastc, dest);
 			}
@@ -501,12 +513,12 @@ expbackq(union node* cmd, int quoted, int flag)
 	if (in.buf)
 		ckfree(in.buf);
 	if (in.jp)
-		exitstatus = waitforjob(in.jp, (int*)NULL);
+		exitstatus = waitforjob(in.jp, (int32_t*)NULL);
 	if (quoted == 0)
 		recordregion(startloc, dest - stackblock(), 0);
 	TRACE(("expbackq: size=%td: \"%.*s\"\n",
 		   ((dest - stackblock()) - startloc),
-		   (int)((dest - stackblock()) - startloc),
+		   (int32_t)((dest - stackblock()) - startloc),
 		   stackblock() + startloc));
 	expdest = dest;
 	INTON;
@@ -514,16 +526,16 @@ expbackq(union node* cmd, int quoted, int flag)
 
 
 
-static int
-subevalvar(char* p, char* str, int strloc, int subtype, int startloc,
-		   int varflags, int quotes)
+static int32_t
+subevalvar(cstring_t p, cstring_t str, size_t strloc, uint32_t subtype, size_t startloc,
+		   uint32_t varflags, uint32_t quotes)
 {
-	char* startp;
-	char* loc = NULL;
-	char* q;
-	int c = 0;
+	cstring_t startp;
+	cstring_t loc = NULL;
+	cstring_t q;
+	char32_t c = 0;
 	struct nodelist* saveargbackq = argbackq;
-	int amount;
+	size_t amount;
 	argstr(p, (subtype == VSTRIMLEFT || subtype == VSTRIMLEFTMAX ||
 			   subtype == VSTRIMRIGHT || subtype == VSTRIMRIGHTMAX ?
 			   EXP_CASE : 0) | EXP_TILDE);
@@ -544,12 +556,12 @@ subevalvar(char* p, char* str, int strloc, int subtype, int startloc,
 			if (*p != CTLENDVAR)
 			{
 				outfmt(out2, "%s\n", startp);
-				error((char*)NULL);
+				sherror((cstring_t)NULL);
 			}
-			error("%.*s: parameter %snot set", (int)(p - str - 1),
+			sherror("%.*s: parameter %snot set", (int32_t)(p - str - 1),
 				  str, (varflags & VSNUL) ? "null or "
 				  : nullstr);
-			return 0;
+			NOTREACHED;
 		case VSTRIMLEFT:
 			for (loc = startp; loc < str; loc++)
 			{
@@ -557,10 +569,10 @@ subevalvar(char* p, char* str, int strloc, int subtype, int startloc,
 				*loc = '\0';
 				if (patmatch(str, startp, quotes))
 				{
-					*loc = c;
+					*loc = (cchar_t)c;
 					goto recordleft;
 				}
-				*loc = c;
+				*loc = (cchar_t)c;
 				if (quotes && *loc == CTLESC)
 					loc++;
 			}
@@ -572,10 +584,10 @@ subevalvar(char* p, char* str, int strloc, int subtype, int startloc,
 				*loc = '\0';
 				if (patmatch(str, startp, quotes))
 				{
-					*loc = c;
+					*loc = (cchar_t)c;
 					goto recordleft;
 				}
-				*loc = c;
+				*loc = (cchar_t)c;
 				loc--;
 				if (quotes && loc > startp && *(loc - 1) == CTLESC)
 				{
@@ -623,41 +635,44 @@ subevalvar(char* p, char* str, int strloc, int subtype, int startloc,
 		default:
 			abort();
 	}
+
 recordleft:
 	amount = ((str - 1) - (loc - startp)) - expdest;
 	STADJUST(amount, expdest);
 	while (loc != str - 1)
 		*startp++ = *loc++;
+
 	return 1;
 }
 
 
 /*
- * Expand a variable, and return a pointer to the next character in the
+ * Expand a variable, and return a pvoid_t to the next character in the
  * input string.
  */
 
-static char*
-evalvar(char* p, int flag)
+static cstring_t
+evalvar(cstring_t p, int32_t flag)
 {
-	int subtype;
-	int varflags;
-	char* var;
-	const char* val;
-	int patloc;
-	int c;
-	int set;
-	int special;
-	int startloc;
-	int varlen;
-	int varlenb;
-	int easy;
-	int quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
-	varflags = (unsigned char) * p++;
+	uint32_t subtype;
+	uint32_t varflags;
+	cstring_t var;
+	const_cstring_t val;
+	size_t patloc;
+	size_t c;
+	int32_t set;
+	int32_t special;
+	size_t startloc;
+	size_t varlen;
+	size_t varlenb;
+	int32_t easy;
+	uint32_t quotes = flag & (EXP_FULL | EXP_CASE | EXP_REDIR);
+
+	varflags = (uint32_t)*p++;
 	subtype = varflags & VSTYPE;
 	var = p;
 	special = 0;
-	if (! is_name(*p))
+	if (!is_name(*p))
 		special = 1;
 	p = strchr(p, '=') + 1;
 again: /* jump here after setting a variable with ${var=text} */
@@ -695,7 +710,7 @@ again: /* jump here after setting a variable with ${var=text} */
 			case VSTRIMRIGHT:
 			case VSTRIMRIGHTMAX:
 			case VSLENGTH:
-				error("%.*s: parameter not set", (int)(p - var - 1),
+				sherror("%.*s: parameter not set", (int32_t)(p - var - 1),
 					  var);
 		}
 	}
@@ -719,7 +734,7 @@ again: /* jump here after setting a variable with ${var=text} */
 						if ((*val & 0xC0) == 0x80)
 							varlen--;
 				}
-				STADJUST(-varlenb, expdest);
+				expdest -= varlenb;	// STADJUST(-varlenb, expdest);
 			}
 		}
 		else
@@ -782,11 +797,10 @@ record:
 			 */
 			STPUTC('\0', expdest);
 			patloc = expdest - stackblock();
-			if (subevalvar(p, NULL, patloc, subtype,
-						   startloc, varflags, quotes) == 0)
+			if (subevalvar(p, NULL, patloc, subtype, startloc, varflags, quotes) == 0)
 			{
-				int amount = (expdest - stackblock() - patloc) + 1;
-				STADJUST(-amount, expdest);
+				size_t amount = (expdest - stackblock() - patloc) + 1;
+				expdest -= amount;	// STADJUST(-amount, expdest);
 			}
 			/* Remove any recorded regions beyond start of variable */
 			removerecordregions(startloc);
@@ -795,8 +809,7 @@ record:
 		case VSQUESTION:
 			if (!set)
 			{
-				if (subevalvar(p, var, 0, subtype, startloc, varflags,
-							   quotes))
+				if (subevalvar(p, var, 0, subtype, startloc, varflags, quotes) == 1)
 				{
 					varflags &= ~VSNUL;
 					/*
@@ -813,14 +826,14 @@ record:
 			break;
 		case VSERROR:
 			c = p - var - 1;
-			error("${%.*s%s}: Bad substitution", c, var,
+			sherror("${%.*s%s}: Bad substitution", c, var,
 				  (c > 0 && *p != CTLENDVAR) ? "..." : "");
 		default:
 			abort();
 	}
 	if (subtype != VSNORMAL)  	/* skip to end of alternative */
 	{
-		int nesting = 1;
+		int32_t nesting = 1;
 		for (;;)
 		{
 			if ((c = *p++) == CTLESC)
@@ -851,8 +864,8 @@ record:
  * Test whether a specialized variable is set.
  */
 
-static int
-varisset(const char* name, int nulok)
+static int32_t
+varisset(const_cstring_t name, int32_t nulok)
 {
 	if (*name == '!')
 		return backgndpidset();
@@ -862,7 +875,7 @@ varisset(const char* name, int nulok)
 			return 0;
 		if (nulok)
 		{
-			char** av;
+			cstring_t* av;
 			for (av = shellparam.p; *av; av++)
 				if (**av != '\0')
 					return 1;
@@ -871,10 +884,10 @@ varisset(const char* name, int nulok)
 	}
 	else if (is_digit(*name))
 	{
-		char* ap;
-		long num;
+		cstring_t ap;
+		intptr_t num;
 		errno = 0;
-		num = strtol(name, NULL, 10);
+		num = (intptr_t)strtol(name, NULL, 10);
 		if (errno != 0 || num > shellparam.nparam)
 			return 0;
 		if (num == 0)
@@ -888,7 +901,7 @@ varisset(const char* name, int nulok)
 }
 
 static void
-strtodest(const char* p, int flag, int subtype, int quoted)
+strtodest(const_cstring_t p, int32_t flag, int32_t subtype, int32_t quoted)
 {
 	if (flag & (EXP_FULL | EXP_CASE) && subtype != VSLENGTH)
 		STPUTS_QUOTES(p, quoted ? DQSYNTAX : BASESYNTAX, expdest);
@@ -901,13 +914,13 @@ strtodest(const char* p, int flag, int subtype, int quoted)
  */
 
 static void
-varvalue(const char* name, int quoted, int subtype, int flag)
+varvalue(const_cstring_t name, int32_t quoted, int32_t subtype, int32_t flag)
 {
-	int num;
-	char* p;
-	int i;
+	int32_t num;
+	cstring_t p;
+	int32_t i;
 	char sep;
-	char** ap;
+	cstring_t* ap;
 	switch (*name)
 	{
 		case '$':
@@ -981,9 +994,9 @@ numvar:
  */
 
 static void
-recordregion(int start, int end, int inquotes)
+recordregion(size_t start, size_t end, size_t inquotes)
 {
-	struct ifsregion* ifsp;
+	pifsregion_t ifsp;
 	INTOFF;
 	if (ifslastp == NULL)
 	{
@@ -999,7 +1012,7 @@ recordregion(int start, int end, int inquotes)
 			INTON;
 			return;
 		}
-		ifsp = (struct ifsregion*)ckmalloc(sizeof(struct ifsregion));
+		ifsp = (pifsregion_t)ckmalloc(sizeof(*ifsp));
 		ifslastp->next = ifsp;
 	}
 	ifslastp = ifsp;
@@ -1024,16 +1037,16 @@ recordregion(int start, int end, int inquotes)
  * Later, they are removed along with the other CTL* characters.
  */
 static void
-ifsbreakup(char* string, struct arglist* arglist)
+ifsbreakup(cstring_t string, struct arglist* arglist)
 {
-	struct ifsregion* ifsp;
+	pifsregion_t ifsp;
 	struct strlist* sp;
-	char* start;
-	char* p;
-	char* q;
-	const char* ifs;
-	const char* ifsspc;
-	int had_param_ch = 0;
+	cstring_t start;
+	cstring_t p;
+	cstring_t q;
+	const_cstring_t ifs;
+	const_cstring_t ifsspc;
+	int32_t had_param_ch = 0;
 	start = string;
 	if (ifslastp == NULL)
 	{
@@ -1138,12 +1151,13 @@ static char expdir[PATH_MAX];
  * The results are stored in the list exparg.
  */
 static void
-expandmeta(struct strlist* str, int flag __unused)
+expandmeta(struct strlist* str, int32_t flag __unused)
 {
-	char* p;
+	cstring_t p;
 	struct strlist** savelastp;
 	struct strlist* sp;
 	char c;
+	(void)flag;
 	/* TODO - EXP_REDIR */
 	while (str)
 	{
@@ -1189,20 +1203,20 @@ nometa:
  */
 
 static void
-expmeta(char* enddir, char* name)
+expmeta(cstring_t enddir, cstring_t name)
 {
-	const char* p;
-	const char* q;
-	const char* start;
-	char* endname;
-	int metaflag;
+	const_cstring_t p;
+	const_cstring_t q;
+	const_cstring_t start;
+	cstring_t endname;
+	int32_t metaflag;
 	struct stat statb;
 	DIR* dirp;
 	struct dirent* dp;
-	int atend;
-	int matchdot;
-	int esc;
-	int namlen;
+	int32_t atend;
+	int32_t matchdot;
+	int32_t esc;
+	size_t namlen;
 	metaflag = 0;
 	start = name;
 	for (p = name; esc = 0, *p; p += esc + 1)
@@ -1329,10 +1343,12 @@ expmeta(char* enddir, char* name)
 				addfname(expdir);
 			else
 			{
+#if _CONSIDERED_DISABLED
 				if (dp->d_type != DT_UNKNOWN &&
 						dp->d_type != DT_DIR &&
 						dp->d_type != DT_LNK)
 					continue;
+#endif
 				if (enddir + namlen + 2 > expdir_end)
 					continue;
 				enddir[namlen] = '/';
@@ -1352,9 +1368,9 @@ expmeta(char* enddir, char* name)
  */
 
 static void
-addfname(char* name)
+addfname(cstring_t name)
 {
-	char* p;
+	cstring_t p;
 	struct strlist* sp;
 	size_t len;
 	len = strlen(name);
@@ -1376,7 +1392,7 @@ addfname(char* name)
 static struct strlist*
 expsort(struct strlist* str)
 {
-	int len;
+	size_t len;
 	struct strlist* sp;
 	len = 0;
 	for (sp = str ; sp ; sp = sp->next)
@@ -1386,24 +1402,26 @@ expsort(struct strlist* str)
 
 
 static struct strlist*
-msort(struct strlist* list, int len)
+msort(struct strlist* list, size_t len)
 {
-	struct strlist* p, *q = NULL;
+	struct strlist* p;
+	struct strlist* q = NULL;
 	struct strlist** lpp;
-	int half;
-	int n;
+	size_t half;
+	size_t n;
+
 	if (len <= 1)
 		return list;
 	half = len >> 1;
 	p = list;
-	for (n = half ; --n >= 0 ;)
+	for (n = half; n-- > 0 ;)
 	{
 		q = p;
 		p = p->next;
 	}
-	q->next = NULL;			/* terminate first half of list */
+	if (q) q->next = NULL;		/* terminate first half of list */
 	q = msort(list, half);		/* sort first half of list */
-	p = msort(p, len - half);		/* sort second half */
+	p = msort(p, len - half);	/* sort second half */
 	lpp = &list;
 	for (;;)
 	{
@@ -1434,10 +1452,10 @@ msort(struct strlist* list, int len)
 
 
 static wchar_t
-get_wc(const char** p)
+get_wc(const_cstring_t* p)
 {
 	wchar_t c;
-	int chrlen;
+	int32_t chrlen;
 	chrlen = mbtowc(&c, *p, 4);
 	if (chrlen == 0)
 		return 0;
@@ -1452,15 +1470,15 @@ get_wc(const char** p)
 /*
  * See if a character matches a character class, starting at the first colon
  * of "[:class:]".
- * If a valid character class is recognized, a pointer to the next character
+ * If a valid character class is recognized, a pvoid_t to the next character
  * after the final closing bracket is stored into *end, otherwise a null
- * pointer is stored into *end.
+ * pvoid_t is stored into *end.
  */
-static int
-match_charclass(const char* p, wchar_t chr, const char** end)
+static int32_t
+match_charclass(const_cstring_t p, wchar_t chr, const_cstring_t* end)
 {
 	char name[20];
-	const char* nameend;
+	const_cstring_t nameend;
 	wctype_t cclass;
 	*end = NULL;
 	p++;
@@ -1483,13 +1501,18 @@ match_charclass(const char* p, wchar_t chr, const char** end)
  * Returns true if the pattern matches the string.
  */
 
-static int
-patmatch(const char* pattern, const char* string, int squoted)
+static int32_t
+patmatch(const_cstring_t pattern, const_cstring_t string, int32_t squoted)
 {
-	const char* p, *q, *end;
-	const char* bt_p, *bt_q;
-	char c;
-	wchar_t wc, wc2;
+	const_cstring_t p;
+	const_cstring_t q;
+	const_cstring_t end;
+	const_cstring_t bt_p;
+	const_cstring_t bt_q;
+	char32_t c;
+	char32_t wc;
+	char32_t wc2;
+
 	p = pattern;
 	q = string;
 	bt_p = NULL;
@@ -1526,7 +1549,7 @@ patmatch(const char* pattern, const char* string, int squoted)
 						goto backtrack;
 				}
 				else
-					wc = (unsigned char) * q++;
+					wc = (char32_t)*q++;
 				break;
 			case '*':
 				c = *p;
@@ -1549,8 +1572,8 @@ patmatch(const char* pattern, const char* string, int squoted)
 				break;
 			case '[':
 			{
-				const char* endp;
-				int invert, found;
+				const_cstring_t endp;
+				int32_t invert, found;
 				wchar_t chr;
 				endp = p;
 				if (*endp == '!' || *endp == '^')
@@ -1584,7 +1607,7 @@ patmatch(const char* pattern, const char* string, int squoted)
 						goto backtrack;
 				}
 				else
-					chr = (unsigned char) * q++;
+					chr = (uint8_t) * q++;
 				c = *p++;
 				do
 				{
@@ -1606,7 +1629,7 @@ patmatch(const char* pattern, const char* string, int squoted)
 							return 0;
 					}
 					else
-						wc = (unsigned char)c;
+						wc = (char32_t)c;
 					if (*p == '-' && p[1] != ']')
 					{
 						p++;
@@ -1621,7 +1644,7 @@ patmatch(const char* pattern, const char* string, int squoted)
 								return 0;
 						}
 						else
-							wc2 = (unsigned char) * p++;
+							wc2 = (char32_t)*p++;
 						if (collate_range_cmp(chr, wc) >= 0
 								&& collate_range_cmp(chr, wc2) <= 0
 						   )
@@ -1644,7 +1667,7 @@ dft:
 					q++;
 				if (*q == '\0')
 					return 0;
-				if (*q++ == c)
+				if (*q++ == (cchar_t)c)
 					break;
 backtrack:
 				/*
@@ -1673,9 +1696,11 @@ backtrack:
  */
 
 void
-rmescapes(char* str)
+rmescapes(cstring_t str)
 {
-	char* p, *q;
+	cstring_t p;
+	cstring_t q;
+
 	p = str;
 	while (*p != CTLESC && *p != CTLQUOTEMARK && *p != CTLQUOTEEND)
 	{
@@ -1703,12 +1728,12 @@ rmescapes(char* str)
  * See if a pattern matches in a case statement.
  */
 
-int
-casematch(union node* pattern, const char* val)
+int32_t
+casematch(union node* pattern, const_cstring_t val)
 {
 	struct stackmark smark;
-	int result;
-	char* p;
+	int32_t result;
+	cstring_t p;
 	setstackmark(&smark);
 	argbackq = pattern->narg.backquote;
 	STARTSTACKSTR(expdest);
@@ -1725,12 +1750,12 @@ casematch(union node* pattern, const char* val)
  * Our own itoa().
  */
 
-static char*
-cvtnum(int num, char* buf)
+static cstring_t
+cvtnum(intptr_t num, cstring_t buf)
 {
 	char temp[32];
-	int neg = num < 0;
-	char* p = temp + 31;
+	intptr_t neg = num < 0;
+	cstring_t p = temp + 31;
 	temp[31] = '\0';
 	do
 	{
@@ -1747,15 +1772,15 @@ cvtnum(int num, char* buf)
  * Do most of the work for wordexp(3).
  */
 
-int
-wordexpcmd(int argc, char** argv)
+int32_t
+wordexpcmd(int32_t argc, cstring_t* argv)
 {
 	size_t len;
-	int i;
+	int32_t i;
 	out1fmt("%08x", argc - 1);
 	for (i = 1, len = 0; i < argc; i++)
 		len += strlen(argv[i]);
-	out1fmt("%08x", (int)len);
+	out1fmt("%08x", (int32_t)len);
 	for (i = 1; i < argc; i++)
 		outbin(argv[i], strlen(argv[i]) + 1, out1);
 	return (0);

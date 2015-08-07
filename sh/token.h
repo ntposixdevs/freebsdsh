@@ -60,7 +60,7 @@ const char tokendlist[] =
 	0,
 };
 
-const char* const tokname[] =
+const_cstring_t const tokname[] =
 {
 	"end of file",
 	"newline",
@@ -94,7 +94,7 @@ const char* const tokname[] =
 
 #define KWDOFFSET 13
 
-const char* const parsekwd[] =
+const_cstring_t const parsekwd[] =
 {
 	"if",
 	"then",

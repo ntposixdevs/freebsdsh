@@ -40,7 +40,7 @@
 #include "shell.h"
 #include "arith_yacc.h"
 #include "expand.h"
-#include "error.h"
+#include "sherror.h"
 #include "memalloc.h"
 #include "parser.h"
 #include "syntax.h"
@@ -49,15 +49,15 @@
 #error Arithmetic tokens are out of order.
 #endif
 
-extern const char* arith_buf;
+extern const_cstring_t arith_buf;
 
-int
+int32_t
 yylex(void)
 {
-	int value;
-	const char* buf = arith_buf;
-	char* end;
-	const char* p;
+	int32_t value;
+	const_cstring_t buf = arith_buf;
+	cstring_t end;
+	const_cstring_t p;
 	for (;;)
 	{
 		value = *buf;

@@ -44,7 +44,7 @@
 #include "main.h"
 #include "options.h"
 #include "output.h"
-#include "error.h"
+#include "sherror.h"
 #include "nodes.h" /* show.h needs nodes.h */
 #include "show.h"
 #include "trap.h"
@@ -58,10 +58,10 @@ struct jmploc* handler;
 volatile sig_atomic_t exception;
 volatile sig_atomic_t suppressint;
 volatile sig_atomic_t intpending;
-char* commandname;
+cstring_t commandname;
 
 
-static void exverror(int, const char*, va_list) __printf0like(2, 0) __dead2;
+DECLSPEC_NORETURN static void exverror(int32_t, const_cstring_t, va_list) __printf0like(2, 0);
 
 /*
  * Called to raise an exception.  Since C doesn't include exceptions, we
@@ -73,7 +73,7 @@ static void exverror(int, const char*, va_list) __printf0like(2, 0) __dead2;
  */
 
 void
-exraise(int e)
+exraise(int32_t e)
 {
 	INTOFF;
 	if (handler == NULL)
@@ -96,7 +96,10 @@ exraise(int e)
 void
 onint(void)
 {
-	sigset_t sigs;
+	// analysis complaint: this is OK for me as sigset_t equals uint32_t, 
+	// but isn't portable. Besides we run sigemptyset later
+	
+	sigset_t sigs = 0;
 	/*
 	 * The !in_dotrap here is safe.  The only way we can arrive here
 	 * with in_dotrap set is that a trap handler set SIGINT to SIG_DFL
@@ -128,7 +131,7 @@ onint(void)
 
 
 static void
-vwarning(const char* msg, va_list ap)
+vwarning(const_cstring_t msg, va_list ap)
 {
 	if (commandname)
 		outfmt(out2, "%s: ", commandname);
@@ -138,7 +141,7 @@ vwarning(const char* msg, va_list ap)
 
 
 void
-warning(const char* msg, ...)
+warning(const_cstring_t msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);
@@ -153,7 +156,7 @@ warning(const char* msg, ...)
  * formatting.  It then raises the error exception.
  */
 static void
-exverror(int cond, const char* msg, va_list ap)
+exverror(int32_t cond, const_cstring_t msg, va_list ap)
 {
 	/*
 	 * An interrupt trumps an error.  Certain places catch error
@@ -178,20 +181,22 @@ exverror(int cond, const char* msg, va_list ap)
 
 
 void
-error(const char* msg, ...)
+sherror(const_cstring_t msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);
 	exverror(EXERROR, msg, ap);
 	va_end(ap);
+	NOTREACHED;	// this is bad
 }
 
 
 void
-exerror(int cond, const char* msg, ...)
+exerror(int32_t cond, const_cstring_t msg, ...)
 {
 	va_list ap;
 	va_start(ap, msg);
 	exverror(cond, msg, ap);
 	va_end(ap);
+	NOTREACHED;	// this is bad
 }

@@ -39,12 +39,12 @@
 #define SQSYNTAX (sqsyntax + SYNBASE)
 #define ARISYNTAX (arisyntax + SYNBASE)
 
-#define is_digit(c)	((unsigned int)((c) - '0') <= 9)
+#define is_digit(c)	((uint32_t)((c) - '0') <= 9)
 #define is_eof(c)	((c) == PEOF)
-#define is_alpha(c)	((is_type+SYNBASE)[(int)c] & (ISUPPER|ISLOWER))
-#define is_name(c)	((is_type+SYNBASE)[(int)c] & (ISUPPER|ISLOWER|ISUNDER))
-#define is_in_name(c)	((is_type+SYNBASE)[(int)c] & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))
-#define is_special(c)	((is_type+SYNBASE)[(int)c] & (ISSPECL|ISDIGIT))
+#define is_alpha(c)	((is_type+SYNBASE)[(int32_t)c] & (ISUPPER|ISLOWER))
+#define is_name(c)	((is_type+SYNBASE)[(int32_t)c] & (ISUPPER|ISLOWER|ISUNDER))
+#define is_in_name(c)	((is_type+SYNBASE)[(int32_t)c] & (ISUPPER|ISLOWER|ISUNDER|ISDIGIT))
+#define is_special(c)	((is_type+SYNBASE)[(int32_t)c] & (ISSPECL|ISDIGIT))
 #define digit_val(c)	((c) - '0')
 
 extern const char basesyntax[];

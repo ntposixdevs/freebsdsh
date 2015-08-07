@@ -84,9 +84,9 @@
 union yystype
 {
 	arith_t val;
-	char* name;
+	cstring_t name;
 };
 
 extern union yystype yylval;
 
-int yylex(void);
+int32_t yylex(void);

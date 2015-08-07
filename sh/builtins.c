@@ -7,7 +7,7 @@
 #include "shell.h"
 #include "builtins.h"
 
-int (*const builtinfunc[])(int, char**) =
+int32_t (*const builtinfunc[])(int32_t, cstring_t*) =
 {
 	bltincmd,
 	aliascmd,

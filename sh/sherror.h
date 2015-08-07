@@ -79,11 +79,11 @@ extern volatile sig_atomic_t intpending;
 #define CLEAR_PENDING_INT intpending = 0
 #define int_pending() intpending
 
-void exraise(int) __dead2;
+DECLSPEC_NORETURN void exraise(int32_t);
 void onint(void);
-void warning(const char*, ...) __printflike(1, 2);
-void error(const char*, ...) __printf0like(1, 2) __dead2;
-void exerror(int, const char*, ...) __printf0like(2, 3) __dead2;
+void warning(const_cstring_t, ...) __printflike(1, 2);
+DECLSPEC_NORETURN void sherror(const_cstring_t, ...) __printf0like(1, 2);
+DECLSPEC_NORETURN void exerror(int32_t, const_cstring_t, ...) __printf0like(2, 3);
 
 
 /*
@@ -91,5 +91,5 @@ void exerror(int, const char*, ...) __printf0like(2, 3) __dead2;
  * so we use _setjmp instead.
  */
 
-#define setjmp(jmploc)	_setjmp(jmploc)
-#define longjmp(jmploc, val)	_longjmp(jmploc, val)
+//#define setjmp(jmploc)	_setjmp(jmploc)
+//#define longjmp(jmploc, val)	_longjmp(jmploc, val)

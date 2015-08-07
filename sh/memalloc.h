@@ -38,27 +38,27 @@
 struct stackmark
 {
 	struct stack_block* stackp;
-	char* stacknxt;
-	int stacknleft;
+	cstring_t stacknxt;
+	int32_t stacknleft;
 };
 
 
-extern char* stacknxt;
-extern int stacknleft;
-extern char* sstrend;
+extern cstring_t stacknxt;
+extern int32_t stacknleft;
+extern cstring_t sstrend;
 
-pointer ckmalloc(size_t);
-pointer ckrealloc(pointer, int);
-void ckfree(pointer);
-char* savestr(const char*);
-pointer stalloc(int);
-void stunalloc(pointer);
+pvoid_t ckmalloc(size_t);
+pvoid_t ckrealloc(pvoid_t, int32_t);
+void ckfree(pvoid_t);
+cstring_t savestr(const_cstring_t);
+pvoid_t stalloc(size_t nbytes);
+void stunalloc(pvoid_t);
 void setstackmark(struct stackmark*);
 void popstackmark(struct stackmark*);
-char* growstackstr(void);
-char* makestrspace(int, char*);
-char* stputbin(const char* data, size_t len, char* p);
-char* stputs(const char* data, char* p);
+cstring_t growstackstr(void);
+cstring_t makestrspace(size_t, cstring_t);
+cstring_t stputbin(const_cstring_t data, size_t len, cstring_t p);
+cstring_t stputs(const_cstring_t data, cstring_t p);
 
 
 

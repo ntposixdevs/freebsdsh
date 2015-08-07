@@ -47,35 +47,37 @@
  * array of pids.
  */
 
-struct procstat
+typedef struct procstat
 {
-	pid_t pid;		/* process id */
-	int status;		/* status flags (defined above) */
-	char* cmd;		/* text of command being run */
-};
-
+	pid_t		pid;		/* process id */
+	int32_t		status;		/* status flags (defined above) */
+	cstring_t	cmd;		/* text of command being run */
+} procstat_t;
+typedef procstat_t* pprocstat_t;
 
 /* states */
-#define JOBSTOPPED 1		/* all procs are stopped */
-#define JOBDONE 2		/* all procs are completed */
-
-
-struct job
-{
-	struct procstat ps0;	/* status of process */
-	struct procstat* ps;	/* status or processes when more than one */
-	short nprocs;		/* number of processes */
-	pid_t pgrp;		/* process group of this job */
-	char state;		/* true if job is finished */
-	char used;		/* true if this entry is in used */
-	char changed;		/* true if status has changed */
-	char foreground;	/* true if running in the foreground */
-	char remembered;	/* true if $! referenced */
-#if JOBS
-	char jobctl;		/* job running under job control */
-	struct job* next;	/* job used after this one */
-#endif
+typedef enum __job_state_const {
+	JOBSTOPPED		= 1,	/* all procs are stopped */
+	JOBDONE			= 2,	/* all procs are completed */
 };
+
+typedef struct job
+{
+	procstat_t	ps0;		/* status of process */
+	procstat_t* ps;			/* status or processes when more than one */
+	uint32_t	nprocs;		/* number of processes */
+	pid_t		pgrp;		/* process group of this job */
+	uint32_t	state;		/* true if job is finished */
+
+	boolean_t	used; 		/* true if this entry is in used */
+	boolean_t	changed;	/* true if status has changed */
+	boolean_t	foreground;	/* true if running in the foreground */
+	boolean_t	remembered;	/* true if $! referenced */
+
+	uint32_t	jobctl;		/* job running under job control */
+	struct job* next;		/* job used after this one */
+} job_t;
+typedef job_t* pjob_t;
 
 enum
 {
@@ -85,18 +87,18 @@ enum
 	SHOWJOBS_PGIDS		/* PID of the group leader only */
 };
 
-extern int job_warning;		/* user was warned about stopped jobs */
+extern int32_t job_warning;		/* user was warned about stopped jobs */
 
-void setjobctl(int);
-void showjobs(int, int);
-struct job* makejob(union node*, int);
-pid_t forkshell(struct job*, union node*, int);
-pid_t vforkexecshell(struct job*, char**, char**, const char*, int, int []);
-int waitforjob(struct job*, int*);
-int stoppedjobs(void);
-int backgndpidset(void);
+void setjobctl(int32_t);
+void showjobs(int32_t, int32_t);
+struct job* makejob(union node*, int32_t);
+pid_t forkshell(struct job*, union node*, int32_t);
+pid_t vforkexecshell(struct job*, cstring_t*, cstring_t*, const_cstring_t, int32_t, int32_t []);
+int32_t waitforjob(struct job*, int32_t*);
+int32_t stoppedjobs(void);
+int32_t backgndpidset(void);
 pid_t backgndpidval(void);
-char* commandtext(union node*);
+cstring_t commandtext(union node*);
 
 #if ! JOBS
 #define setjobctl(on)	/* do nothing */

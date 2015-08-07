@@ -51,7 +51,7 @@
 #include "mystring.h"
 #ifndef NO_HISTORY
 #include "myhistedit.h"
-#include "error.h"
+#include "sherror.h"
 #include "eval.h"
 #include "memalloc.h"
 #include "builtins.h"
@@ -61,12 +61,12 @@
 
 History* hist;	/* history cookie */
 EditLine* el;	/* editline cookie */
-int displayhist;
+int32_t displayhist;
 static FILE* el_in, *el_out, *el_err;
 
-static char* fc_replace(const char*, char*, char*);
-static int not_fcnumber(const char*);
-static int str_to_event(const char*, int);
+static cstring_t fc_replace(const_cstring_t, cstring_t, cstring_t);
+static int32_t not_fcnumber(const_cstring_t);
+static int32_t str_to_event(const_cstring_t, int32_t);
 
 /*
  * Set history and editing status.  Called whenever the status may
@@ -96,7 +96,7 @@ histedit(void)
 			/*
 			 * turn editing on
 			 */
-			char* term;
+			cstring_t term;
 			INTOFF;
 			if (el_in == NULL)
 				el_in = fdopen(0, "r");
@@ -119,7 +119,7 @@ histedit(void)
 				el_set(el, EL_PROMPT, getprompt);
 				el_set(el, EL_ADDFN, "sh-complete",
 					   "Filename completion",
-					   _el_fn_sh_complete);
+					   _el_fn_complete);
 			}
 			else
 			{
@@ -164,9 +164,9 @@ bad:
 
 
 void
-sethistsize(const char* hs)
+sethistsize(const_cstring_t hs)
 {
-	int histsize;
+	int32_t histsize;
 	HistEvent he;
 	if (hist != NULL)
 	{
@@ -180,34 +180,38 @@ sethistsize(const char* hs)
 }
 
 void
-setterm(const char* term)
+setterm(const_cstring_t term)
 {
 	if (rootshell && el != NULL && term != NULL)
 		el_set(el, EL_TERMINAL, term);
 }
 
-int
-histcmd(int argc, char** argv __unused)
+int32_t
+histcmd(int32_t argc, cstring_t* argv __unused)
 {
-	int ch;
-	const char* editor = NULL;
+	int32_t ch;
+	const_cstring_t editor = NULL;
 	HistEvent he;
-	int lflg = 0, nflg = 0, rflg = 0, sflg = 0;
-	int i, retval;
-	const char* firststr, *laststr;
-	int first, last, direction;
-	char* pat = NULL, *repl = NULL;
-	static int active = 0;
+	int32_t lflg = 0, nflg = 0, rflg = 0, sflg = 0;
+	int32_t i, retval;
+	const_cstring_t firststr;
+	const_cstring_t laststr;
+	int32_t first, last, direction;
+	cstring_t pat = NULL;
+	cstring_t repl = NULL;
+	static int32_t active = 0;
 	struct jmploc jmploc;
 	struct jmploc* savehandler;
 	char editfilestr[PATH_MAX];
-	char* volatile editfile;
+	cstring_t volatile editfile = NULL;
 	FILE* efp = NULL;
-	int oldhistnum;
+	int32_t oldhistnum;
+	(void)argv;
+
 	if (hist == NULL)
-		error("history not active");
+		sherror("history not active");
 	if (argc == 1)
-		error("missing history argument");
+		sherror("missing history argument");
 	while (not_fcnumber(*argptr) && (ch = nextopt("e:lnrs")) != '\0')
 		switch ((char)ch)
 		{
@@ -252,7 +256,7 @@ histcmd(int argc, char** argv __unused)
 		{
 			active = 0;
 			displayhist = 0;
-			error("called recursively too many times");
+			sherror("called recursively too many times");
 		}
 		/*
 		 * Set editor.
@@ -299,7 +303,7 @@ histcmd(int argc, char** argv __unused)
 		laststr = argptr[1];
 	}
 	else
-		error("too many arguments");
+		sherror("too many arguments");
 	/*
 	 * Turn into event numbers.
 	 */
@@ -322,16 +326,16 @@ histcmd(int argc, char** argv __unused)
 	 */
 	if (editor)
 	{
-		int fd;
+		int32_t fd;
 		INTOFF;		/* easier */
 		sprintf(editfilestr, "%s/_shXXXXXX", _PATH_TMP);
 		if ((fd = mkstemp(editfilestr)) < 0)
-			error("can't create temporary file %s", editfile);
+			sherror("can't create temporary file %s", editfile);
 		editfile = editfilestr;
 		if ((efp = fdopen(fd, "w")) == NULL)
 		{
 			close(fd);
-			error("Out of space");
+			sherror("Out of space");
 		}
 	}
 	/*
@@ -354,8 +358,8 @@ histcmd(int argc, char** argv __unused)
 		}
 		else
 		{
-			char* s = pat ?
-					  fc_replace(he.str, pat, repl) : (char*)he.str;
+			cstring_t s = pat ?
+					  fc_replace(he.str, pat, repl) : (cstring_t)he.str;
 			if (sflg)
 			{
 				if (displayhist)
@@ -393,7 +397,7 @@ histcmd(int argc, char** argv __unused)
 	}
 	if (editor)
 	{
-		char* editcmd;
+		cstring_t editcmd;
 		fclose(efp);
 		editcmd = stalloc(strlen(editor) + strlen(editfile) + 2);
 		sprintf(editcmd, "%s %s", editor, editfile);
@@ -410,18 +414,18 @@ histcmd(int argc, char** argv __unused)
 	return 0;
 }
 
-static char*
-fc_replace(const char* s, char* p, char* r)
+static cstring_t
+fc_replace(const_cstring_t s, cstring_t p, cstring_t r)
 {
-	char* dest;
-	int plen = strlen(p);
+	cstring_t dest;
+	size_t len = strlen(p);
 	STARTSTACKSTR(dest);
 	while (*s)
 	{
-		if (*s == *p && strncmp(s, p, plen) == 0)
+		if (*s == *p && strncmp(s, p, len) == 0)
 		{
 			STPUTS(r, dest);
-			s += plen;
+			s += len;
 			*p = '\0';	/* so no more matches */
 		}
 		else
@@ -432,8 +436,8 @@ fc_replace(const char* s, char* p, char* r)
 	return (dest);
 }
 
-static int
-not_fcnumber(const char* s)
+static int32_t
+not_fcnumber(const_cstring_t s)
 {
 	if (s == NULL)
 		return (0);
@@ -442,13 +446,13 @@ not_fcnumber(const char* s)
 	return (!is_number(s));
 }
 
-static int
-str_to_event(const char* str, int last)
+static int32_t
+str_to_event(const_cstring_t str, int32_t last)
 {
 	HistEvent he;
-	const char* s = str;
-	int relative = 0;
-	int i, retval;
+	const_cstring_t s = str;
+	int32_t relative = 0;
+	int32_t i, retval;
 	retval = history(hist, &he, H_FIRST);
 	switch (*s)
 	{
@@ -483,7 +487,7 @@ str_to_event(const char* str, int last)
 			}
 		}
 		if (retval == -1)
-			error("history number %s not found (internal error)",
+			sherror("history number %s not found (internal error)",
 				  str);
 	}
 	else
@@ -493,34 +497,34 @@ str_to_event(const char* str, int last)
 		 */
 		retval = history(hist, &he, H_PREV_STR, str);
 		if (retval == -1)
-			error("history pattern not found: %s", str);
+			sherror("history pattern not found: %s", str);
 	}
 	return (he.num);
 }
 
-int
-bindcmd(int argc, char** argv)
+int32_t
+bindcmd(int32_t argc, cstring_t* argv)
 {
 	if (el == NULL)
-		error("line editing is disabled");
-	return (el_parse(el, argc, (const char**)argv));
+		sherror("line editing is disabled");
+	return (el_parse(el, argc, (const_cstring_t*)argv));
 }
 
 #else
-#include "error.h"
+#include "sherror.h"
 
-int
-histcmd(int argc, char** argv)
+int32_t
+histcmd(int32_t argc, cstring_t* argv)
 {
-	error("not compiled with history support");
+	sherror("not compiled with history support");
 	/*NOTREACHED*/
 	return (0);
 }
 
-int
-bindcmd(int argc, char** argv)
+int32_t
+bindcmd(int32_t argc, cstring_t* argv)
 {
-	error("not compiled with line editing support");
+	sherror("not compiled with line editing support");
 	return (0);
 }
 #endif

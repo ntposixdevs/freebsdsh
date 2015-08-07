@@ -33,28 +33,22 @@
  *	@(#)echo.c	8.2 (Berkeley) 5/4/95
  */
 
+#include <sys/types.h>
+#include "bltin.h"
+
 /*
  * Echo command.
  */
 
-#include <sys/types.h>
-
-#define main echocmd
-#include "bltin.h"
-
-/* #define eflag 1 */
-
-int
-main(int argc, char* argv[])
+int32_t
+echocmd(int32_t argc, cstring_t argv[])
 {
-	char** ap;
-	char* p;
-	char c;
-	int count;
-	int nflag = 0;
-#ifndef eflag
-	int eflag = 0;
-#endif
+	cstring_t* ap;
+	cstring_t p;
+	char32_t c;
+	size_t count;
+	uint32_t nflag = 0;
+	uint32_t eflag = 0;
 	ap = argv;
 	if (argc)
 		ap++;
@@ -90,7 +84,7 @@ main(int argc, char* argv[])
 					case 'c':
 						return 0;		/* exit */
 					case 'e':
-						c = '\033';
+						c = '\033';		//-V536
 						break;
 					case 'f':
 						c = '\f';
@@ -112,7 +106,7 @@ main(int argc, char* argv[])
 					case '0':
 						c = 0;
 						count = 3;
-						while (--count >= 0 && (unsigned)(*p - '0') < 8)
+						while (count-- > 0 && (char32_t)(*p - '0') < 8)
 							c = (c << 3) + (*p++ - '0');
 						break;
 					default:

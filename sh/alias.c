@@ -31,12 +31,12 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  */
-
+#include <sys/cdefs.h>
 #include <sys/types.h>
 #include <stdlib.h>
 #include "shell.h"
 #include "output.h"
-#include "error.h"
+#include "sherror.h"
 #include "memalloc.h"
 #include "mystring.h"
 #include "alias.h"
@@ -46,15 +46,15 @@
 #define ATABSIZE 39
 
 static struct alias* atab[ATABSIZE];
-static int aliases;
+static int32_t aliases;
 
-static void setalias(const char*, const char*);
-static int unalias(const char*);
-static struct alias** hashalias(const char*);
+static void setalias(const_cstring_t, const_cstring_t);
+static int32_t unalias(const_cstring_t);
+static struct alias** hashalias(const_cstring_t);
 
 static
 void
-setalias(const char* name, const char* val)
+setalias(const_cstring_t name, const_cstring_t val)
 {
 	struct alias* ap, **app;
 	app = hashalias(name);
@@ -81,8 +81,8 @@ setalias(const char* name, const char* val)
 	INTON;
 }
 
-static int
-unalias(const char* name)
+static int32_t
+unalias(const_cstring_t name)
 {
 	struct alias* ap, **app;
 	app = hashalias(name);
@@ -119,7 +119,7 @@ static void
 rmaliases(void)
 {
 	struct alias* ap, *tmp;
-	int i;
+	int32_t i;
 	INTOFF;
 	for (i = 0; i < ATABSIZE; i++)
 	{
@@ -139,7 +139,7 @@ rmaliases(void)
 }
 
 struct alias*
-lookupalias(const char* name, int check)
+lookupalias(const_cstring_t name, int32_t check)
 {
 	struct alias* ap = *hashalias(name);
 	for (; ap; ap = ap->next)
@@ -154,8 +154,8 @@ lookupalias(const char* name, int check)
 	return (NULL);
 }
 
-static int
-comparealiases(const void* p1, const void* p2)
+static int32_t __cdecl
+comparealiases(const_pvoid_t p1, const_pvoid_t p2)
 {
 	const struct alias* const* a1 = p1;
 	const struct alias* const* a2 = p2;
@@ -173,7 +173,7 @@ printalias(const struct alias* a)
 static void
 printaliases(void)
 {
-	int i, j;
+	int32_t i, j;
 	struct alias** sorted, *ap;
 	INTOFF;
 	sorted = ckmalloc(aliases * sizeof(*sorted));
@@ -193,12 +193,15 @@ printaliases(void)
 	INTON;
 }
 
-int
-aliascmd(int argc __unused, char** argv __unused)
+int32_t
+aliascmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	char* n, *v;
-	int ret = 0;
+	cstring_t n;
+	cstring_t v;
+	int32_t ret = 0;
 	struct alias* ap;
+	(void)argc; (void)argv;
+
 	nextopt("");
 	if (*argptr == NULL)
 	{
@@ -224,10 +227,12 @@ aliascmd(int argc __unused, char** argv __unused)
 	return (ret);
 }
 
-int
-unaliascmd(int argc __unused, char** argv __unused)
+int32_t
+unaliascmd(int32_t argc __unused, cstring_t* argv __unused)
 {
-	int i;
+	char32_t i;
+	(void)argc; (void)argv;
+
 	while ((i = nextopt("a")) != '\0')
 	{
 		if (i == 'a')
@@ -242,9 +247,9 @@ unaliascmd(int argc __unused, char** argv __unused)
 }
 
 static struct alias**
-hashalias(const char* p)
+hashalias(const_cstring_t p)
 {
-	unsigned int hashval;
+	uint32_t hashval;
 	hashval = *p << 4;
 	while (*p)
 		hashval += *p++;
